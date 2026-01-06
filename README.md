@@ -1,6 +1,6 @@
 # iOS Health Dump
 
-Backend service and web dashboard for receiving, storing, and visualizing daily health metrics (steps, calories, distance) from iOS via Shortcuts.
+Backend service and web dashboard for receiving, storing, and visualizing daily health metrics (steps, calories, distance, flights climbed) from iOS via Shortcuts.
 
 ## Tech Stack
 
@@ -160,6 +160,7 @@ Response:
       "steps": 10000,
       "kcals": 500.5,
       "km": 8.2,
+      "flights_climbed": 50,
       "recorded_at": "2026-01-03T14:30:00+01:00"
     }
   ]
@@ -171,7 +172,7 @@ Response:
 ```bash
 curl -X POST http://localhost:5009/dump \
   -H "Content-Type: application/json" \
-  -d '{"steps": 10000, "kcals": 500.5, "km": 8.2}'
+  -d '{"steps": 10000, "kcals": 500.5, "km": 8.2, "flights_climbed": 50}'
 ```
 
 Request body:
@@ -179,7 +180,8 @@ Request body:
 {
   "steps": "integer (required)",
   "kcals": "float (required)",
-  "km": "float (required)"
+  "km": "float (required)",
+  "flights_climbed": "integer (optional)"
 }
 ```
 
@@ -192,6 +194,7 @@ Response:
     "steps": 10000,
     "kcals": 500.5,
     "km": 8.2,
+    "flights_climbed": 50,
     "recorded_at": "2026-01-03T14:30:00+01:00"
   },
   "row_count": 42
@@ -202,10 +205,10 @@ Response:
 
 The web dashboard provides an iOS Health App-inspired interface with:
 
-- **Today's Summary**: Large metric cards showing steps, calories, and distance with progress rings
+- **Today's Summary**: Large metric cards showing steps, calories, distance, and flights climbed with progress rings
 - **Statistics**: Average values and totals for week/month/year periods
 - **Time Series Charts**: Interactive line charts for all metrics using Chart.js
-- **Recent Activity**: Last 5 days of activity at a glance
+- **Recent Activity**: Sortable table with all activity data
 - **Responsive Design**: Works on mobile and desktop
 - **Dark Theme**: iOS-inspired dark color scheme
 
@@ -216,7 +219,7 @@ The web dashboard provides an iOS Health App-inspired interface with:
 | **Upsert logic** | Only keeps the latest entry per day; older duplicates are skipped |
 | **Timezone** | All times normalized to Europe/Berlin |
 | **Auto-commit** | Scheduler commits DB changes to git hourly; amends same-day commits |
-| **Goals** | Default goals: 10,000 steps, 500 kcal, 8 km (configurable in frontend) |
+| **Goals** | Default goals: 10,000 steps, 500 kcal, 8 km, 50 flights climbed (configurable in frontend) |
 
 ## Data Models
 
@@ -226,6 +229,7 @@ HealthDump
 ├── steps: int
 ├── kcals: float
 ├── km: float
+├── flights_climbed: int
 └── recorded_at: datetime (ISO timestamp)
 ```
 

@@ -43,29 +43,25 @@ def db_transaction():
 
 
 def init_health_dumps_table() -> None:
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    with db_transaction() as (conn, cursor):
+        cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{TABLE_NAME}'")
+        if cursor.fetchone():
+            logger.info("✅ Health dumps table already exists")
+            return
 
-    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{TABLE_NAME}'")
-    if cursor.fetchone():
-        logger.info("✅ Health dumps table already exists")
-        return
-
-    cursor.execute(
-        f"""
-        CREATE TABLE {TABLE_NAME} (
-            date TEXT PRIMARY KEY,
-            steps INTEGER,
-            kcals REAL,
-            km REAL,
-            recorded_at TEXT NOT NULL
+        cursor.execute(
+            f"""
+            CREATE TABLE {TABLE_NAME} (
+                date TEXT PRIMARY KEY,
+                steps INTEGER,
+                kcals REAL,
+                km REAL,
+                flights_climbed INTEGER,
+                recorded_at TEXT NOT NULL
+            )
+        """
         )
-    """
-    )
-    connection.commit()
-    logger.info("✅ Health dumps table initialized")
-
-    connection.close()
+        logger.info("✅ Health dumps table initialized")
 
 
 init_health_dumps_table()

@@ -21,6 +21,7 @@ def sample_health_dump(sample_datetime):
         steps=10000,
         kcals=500.5,
         km=8.2,
+        flights_climbed=50,
         recorded_at=sample_datetime,
     )
 
@@ -33,6 +34,7 @@ def sample_health_dump_with_nones(sample_datetime):
         steps=None,
         kcals=None,
         km=None,
+        flights_climbed=None,
         recorded_at=sample_datetime,
     )
 
@@ -48,6 +50,7 @@ class TestToDict:
         assert result["steps"] == 10000
         assert result["kcals"] == 500.5
         assert result["km"] == 8.2
+        assert result["flights_climbed"] == 50
         assert result["recorded_at"] == "2026-01-05T14:30:00"
 
     def test_to_dict_with_none_values(self, sample_health_dump_with_nones):
@@ -58,6 +61,7 @@ class TestToDict:
         assert result["steps"] is None
         assert result["kcals"] is None
         assert result["km"] is None
+        assert result["flights_climbed"] is None
         assert result["recorded_at"] == "2026-01-05T14:30:00"
 
     def test_to_dict_recorded_at_is_iso_format(self, sample_health_dump):
@@ -78,6 +82,7 @@ class TestFromDict:
             "steps": 10000,
             "kcals": 500.5,
             "km": 8.2,
+            "flights_climbed": 50,
             "recorded_at": "2026-01-05T14:30:00",
         }
 
@@ -87,6 +92,7 @@ class TestFromDict:
         assert result.steps == 10000
         assert result.kcals == 500.5
         assert result.km == 8.2
+        assert result.flights_climbed == 50
         assert result.recorded_at == datetime(2026, 1, 5, 14, 30, 0)
 
     def test_from_dict_with_z_suffix_utc(self):
@@ -98,6 +104,7 @@ class TestFromDict:
             "steps": 10000,
             "kcals": 500.5,
             "km": 8.2,
+            "flights_climbed": 50,
             "recorded_at": "2026-01-05T14:30:00Z",
         }
 
@@ -114,6 +121,7 @@ class TestFromDict:
             "steps": 10000,
             "kcals": 500.5,
             "km": 8.2,
+            "flights_climbed": 50,
             "recorded_at": recorded_at,
         }
 
@@ -128,6 +136,7 @@ class TestFromDict:
             "steps": 10000,
             "kcals": 500.5,
             "km": 8.2,
+            "flights_climbed": 50,
             "recorded_at": None,
         }
 
@@ -144,6 +153,7 @@ class TestFromDict:
             "steps": 10000,
             "kcals": 500.5,
             "km": 8.2,
+            "flights_climbed": 50,
         }
 
         before = datetime.now()
@@ -159,6 +169,7 @@ class TestFromDict:
             "steps": None,
             "kcals": None,
             "km": None,
+            "flights_climbed": None,
             "recorded_at": "2026-01-05T14:30:00",
         }
 
@@ -168,6 +179,7 @@ class TestFromDict:
         assert result.steps is None
         assert result.kcals is None
         assert result.km is None
+        assert result.flights_climbed is None
 
     def test_from_dict_raises_keyerror_on_missing_date(self):
         """from_dict raises KeyError when required date field is missing."""
@@ -175,6 +187,7 @@ class TestFromDict:
             "steps": 10000,
             "kcals": 500.5,
             "km": 8.2,
+            "flights_climbed": 50,
             "recorded_at": "2026-01-05T14:30:00",
         }
 
@@ -194,6 +207,7 @@ class TestRoundTrip:
         assert deserialized.steps == sample_health_dump.steps
         assert deserialized.kcals == sample_health_dump.kcals
         assert deserialized.km == sample_health_dump.km
+        assert deserialized.flights_climbed == sample_health_dump.flights_climbed
         assert deserialized.recorded_at == sample_health_dump.recorded_at
 
     def test_round_trip_with_none_values(self, sample_health_dump_with_nones):
@@ -205,4 +219,5 @@ class TestRoundTrip:
         assert deserialized.steps is None
         assert deserialized.kcals is None
         assert deserialized.km is None
+        assert deserialized.flights_climbed is None
         assert deserialized.recorded_at == sample_health_dump_with_nones.recorded_at

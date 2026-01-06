@@ -26,14 +26,15 @@ def upsert_health_dump(health_dump: HealthDump) -> int:
 
         cursor.execute(
             f"""
-            INSERT OR REPLACE INTO {TABLE_NAME} (date, steps, kcals, km, recorded_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO {TABLE_NAME} (date, steps, kcals, km, flights_climbed, recorded_at)
+            VALUES (?, ?, ?, ?, ?, ?)
         """,
             (
                 health_dump.date,
                 health_dump.steps,
                 health_dump.kcals,
                 health_dump.km,
+                health_dump.flights_climbed,
                 health_dump.recorded_at.isoformat(),
             ),
         )
@@ -55,7 +56,7 @@ def get_all_health_data(fill_missing_dates: bool = True) -> list[dict[str, any]]
     with db_transaction() as (conn, cursor):
         cursor.execute(
             f"""
-            SELECT date, steps, kcals, km, recorded_at 
+            SELECT date, steps, kcals, km, flights_climbed, recorded_at 
             FROM {TABLE_NAME} 
             ORDER BY date DESC
         """
@@ -68,6 +69,7 @@ def get_all_health_data(fill_missing_dates: bool = True) -> list[dict[str, any]]
             "steps": row["steps"],
             "kcals": row["kcals"],
             "km": row["km"],
+            "flights_climbed": row["flights_climbed"],
             "recorded_at": row["recorded_at"],
         }
         for row in rows

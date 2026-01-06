@@ -79,6 +79,7 @@ class TestGetHealthData:
             steps=10000,
             kcals=500.5,
             km=8.2,
+            flights_climbed=50,
             recorded_at=datetime(2026, 1, 5, 14, 30, 0),
         )
         dump2 = HealthDump(
@@ -86,6 +87,7 @@ class TestGetHealthData:
             steps=8000,
             kcals=400.0,
             km=6.5,
+            flights_climbed=30,
             recorded_at=datetime(2026, 1, 6, 14, 30, 0),
         )
 

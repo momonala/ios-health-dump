@@ -8,6 +8,7 @@ const CONFIG = {
         steps: 10000,
         kcals: 500,
         km: 8,
+        flights_climbed: 50,
     },
     chartColors: {
         steps: {
@@ -22,6 +23,10 @@ const CONFIG = {
             main: '#34C759',
             light: 'rgba(52, 199, 89, 0.2)',
         },
+        flights_climbed: {
+            main: '#AF52DE',
+            light: 'rgba(175, 82, 222, 0.2)',
+        },
     },
     periods: {
         week: 7,
@@ -33,12 +38,18 @@ const CONFIG = {
 
 const state = {
     healthData: [],
-    currentPeriod: 'all',
-    groupBy: 'month',
+    currentPeriod: 'month',
+    groupBy: 'day',
     chart: null,
     sort: {
         column: 'date',
         direction: 'desc',
+    },
+    selection: {
+        start: null,
+        end: null,
+        isSelecting: false,
+        startX: null,
     },
 };
 
@@ -91,8 +102,12 @@ const getMonthKey = (dateStr) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 };
 
-const getMonthLabel = (monthKey) => {
+const getMonthLabel = (monthKey, formatMonthYear = false) => {
     const [year, month] = monthKey.split('-');
+    if (formatMonthYear) {
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
     return new Date(parseInt(year), parseInt(month) - 1, 1).toLocaleDateString('en-US', { 
         month: 'short', 
         year: '2-digit' 
@@ -102,15 +117,20 @@ const getMonthLabel = (monthKey) => {
 const groupDataByDay = (data) => {
     // Sort by date ascending
     const sorted = [...data].sort((a, b) => getDateOnly(a.date).localeCompare(getDateOnly(b.date)));
+    const formatMonthYear = state.currentPeriod === 'all' || state.currentPeriod === 'year';
     
     return {
         labels: sorted.map(d => {
             const date = parseDate(d.date);
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            if (formatMonthYear) {
+                return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            }
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }),
         steps: sorted.map(d => Number(d.steps) || 0),
         kcals: sorted.map(d => Number(d.kcals) || 0),
         km: sorted.map(d => Number(d.km) || 0),
+        flights_climbed: sorted.map(d => Number(d.flights_climbed) || 0),
     };
 };
 
@@ -125,12 +145,14 @@ const groupDataByMonth = (data) => {
                 steps: { total: 0, count: 0 },
                 kcals: { total: 0, count: 0 },
                 km: { total: 0, count: 0 },
+                flights_climbed: { total: 0, count: 0 },
             };
         }
         
         const stepsVal = Number(item.steps) || 0;
         const kcalsVal = Number(item.kcals) || 0;
         const kmVal = Number(item.km) || 0;
+        const stairsVal = Number(item.flights_climbed) || 0;
         
         if (stepsVal > 0) {
             monthMap[monthKey].steps.total += stepsVal;
@@ -144,15 +166,22 @@ const groupDataByMonth = (data) => {
             monthMap[monthKey].km.total += kmVal;
             monthMap[monthKey].km.count += 1;
         }
+        if (stairsVal > 0) {
+            monthMap[monthKey].flights_climbed.total += stairsVal;
+            monthMap[monthKey].flights_climbed.count += 1;
+        }
     });
     
     const sortedMonths = Object.keys(monthMap).sort();
     
+    const formatMonthYear = state.currentPeriod === 'all' || state.currentPeriod === 'year';
+    
     return {
-        labels: sortedMonths.map(getMonthLabel),
+        labels: sortedMonths.map(m => getMonthLabel(m, formatMonthYear)),
         steps: sortedMonths.map(m => monthMap[m].steps.count > 0 ? monthMap[m].steps.total / monthMap[m].steps.count : 0),
         kcals: sortedMonths.map(m => monthMap[m].kcals.count > 0 ? monthMap[m].kcals.total / monthMap[m].kcals.count : 0),
         km: sortedMonths.map(m => monthMap[m].km.count > 0 ? monthMap[m].km.total / monthMap[m].km.count : 0),
+        flights_climbed: sortedMonths.map(m => monthMap[m].flights_climbed.count > 0 ? monthMap[m].flights_climbed.total / monthMap[m].flights_climbed.count : 0),
     };
 };
 
@@ -165,8 +194,11 @@ const getWeekKey = (dateStr) => {
     return monday.toISOString().split('T')[0];
 };
 
-const getWeekLabel = (weekKey) => {
+const getWeekLabel = (weekKey, formatMonthYear = false) => {
     const date = new Date(weekKey);
+    if (formatMonthYear) {
+        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
@@ -181,12 +213,14 @@ const groupDataByWeek = (data) => {
                 steps: { total: 0, count: 0 },
                 kcals: { total: 0, count: 0 },
                 km: { total: 0, count: 0 },
+                flights_climbed: { total: 0, count: 0 },
             };
         }
         
         const stepsVal = Number(item.steps) || 0;
         const kcalsVal = Number(item.kcals) || 0;
         const kmVal = Number(item.km) || 0;
+        const stairsVal = Number(item.flights_climbed) || 0;
         
         if (stepsVal > 0) {
             weekMap[weekKey].steps.total += stepsVal;
@@ -200,15 +234,21 @@ const groupDataByWeek = (data) => {
             weekMap[weekKey].km.total += kmVal;
             weekMap[weekKey].km.count += 1;
         }
+        if (stairsVal > 0) {
+            weekMap[weekKey].flights_climbed.total += stairsVal;
+            weekMap[weekKey].flights_climbed.count += 1;
+        }
     });
     
     const sortedWeeks = Object.keys(weekMap).sort();
+    const formatMonthYear = state.currentPeriod === 'all' || state.currentPeriod === 'year';
     
     return {
-        labels: sortedWeeks.map(w => `Week of ${getWeekLabel(w)}`),
+        labels: sortedWeeks.map(w => formatMonthYear ? getWeekLabel(w, true) : `Week of ${getWeekLabel(w)}`),
         steps: sortedWeeks.map(w => weekMap[w].steps.count > 0 ? weekMap[w].steps.total / weekMap[w].steps.count : 0),
         kcals: sortedWeeks.map(w => weekMap[w].kcals.count > 0 ? weekMap[w].kcals.total / weekMap[w].kcals.count : 0),
         km: sortedWeeks.map(w => weekMap[w].km.count > 0 ? weekMap[w].km.total / weekMap[w].km.count : 0),
+        flights_climbed: sortedWeeks.map(w => weekMap[w].flights_climbed.count > 0 ? weekMap[w].flights_climbed.total / weekMap[w].flights_climbed.count : 0),
     };
 };
 
@@ -268,38 +308,54 @@ const updateHeaderDate = () => {
 
 const updateTodayMetrics = (data) => {
     const today = getTodayISO();
-    const todayData = data.find(d => getDateOnly(d.date) === today) || { steps: 0, kcals: 0, km: 0 };
+    const todayData = data.find(d => getDateOnly(d.date) === today) || { steps: 0, kcals: 0, km: 0, flights_climbed: 0 };
     
     updateText('todaySteps', formatNumber(todayData.steps));
     updateText('todayKcals', formatNumber(Math.round(todayData.kcals ?? 0)));
     updateText('todayKm', formatNumber(todayData.km, 1));
+    updateText('todayFlightsClimbed', formatNumber(todayData.flights_climbed ?? 0));
     
     updateProgressRing('stepsProgress', calcPercentage(todayData.steps ?? 0, CONFIG.goals.steps));
     updateProgressRing('kcalsProgress', calcPercentage(todayData.kcals ?? 0, CONFIG.goals.kcals));
     updateProgressRing('kmProgress', calcPercentage(todayData.km ?? 0, CONFIG.goals.km));
+    updateProgressRing('flightsClimbedProgress', calcPercentage(todayData.flights_climbed ?? 0, CONFIG.goals.flights_climbed));
     
     updateText('stepsGoalLabel', `of ${formatNumber(CONFIG.goals.steps)} goal`);
     updateText('kcalsGoalLabel', `of ${formatNumber(CONFIG.goals.kcals)} goal`);
     updateText('kmGoalLabel', `of ${CONFIG.goals.km} km goal`);
+    updateText('flightsClimbedGoalLabel', `of ${formatNumber(CONFIG.goals.flights_climbed)} goal`);
 };
 
-const updateStatistics = (data, period) => {
-    const filteredData = filterByPeriod(data, period);
+const updateStatistics = (data, period, selectedRange = null) => {
+    let filteredData = filterByPeriod(data, period);
+    
+    // Apply selection range if provided
+    if (selectedRange && selectedRange.start !== null && selectedRange.end !== null) {
+        const startDate = getDateOnly(selectedRange.start);
+        const endDate = getDateOnly(selectedRange.end);
+        filteredData = filteredData.filter(item => {
+            const itemDate = getDateOnly(item.date);
+            return itemDate >= startDate && itemDate <= endDate;
+        });
+    }
     
     const stepsStats = calcStats(filteredData, 'steps');
     const kcalsStats = calcStats(filteredData, 'kcals');
     const kmStats = calcStats(filteredData, 'km');
+    const stairsStats = calcStats(filteredData, 'flights_climbed');
     
     // Totals row
     updateText('totalSteps', formatNumber(Math.round(stepsStats.total)));
     updateText('totalKcals', formatNumber(Math.round(kcalsStats.total)));
     updateText('totalKm', `${formatNumber(kmStats.total, 1)} km`);
+    updateText('totalFlightsClimbed', formatNumber(Math.round(stairsStats.total)));
     updateText('daysTracked', filteredData.length);
     
     // Averages row
     updateText('avgSteps', formatNumber(Math.round(stepsStats.avg)));
     updateText('avgKcals', formatNumber(Math.round(kcalsStats.avg)));
     updateText('avgKm', `${formatNumber(kmStats.avg, 1)} km`);
+    updateText('avgFlightsClimbed', formatNumber(Math.round(stairsStats.avg)));
 };
 
 const escapeHtml = (str) => {
@@ -331,6 +387,10 @@ const sortActivityData = (data, column, direction) => {
             case 'km':
                 aVal = Number(a.km) || 0;
                 bVal = Number(b.km) || 0;
+                break;
+            case 'flights_climbed':
+                aVal = Number(a.flights_climbed) || 0;
+                bVal = Number(b.flights_climbed) || 0;
                 break;
             default:
                 return 0;
@@ -365,7 +425,7 @@ const renderActivityList = (data) => {
     if (!data.length) {
         container.innerHTML = `
             <tr class="activity-empty-row">
-                <td colspan="4">
+                <td colspan="5">
                     <div class="empty-state">
                         <div class="empty-state-icon">📊</div>
                         <p class="empty-state-text">No activity data yet</p>
@@ -383,6 +443,7 @@ const renderActivityList = (data) => {
         const stepsStr = formatNumber(item.steps);
         const kcalsStr = formatNumber(Math.round(item.kcals ?? 0));
         const kmStr = formatNumber(item.km, 1);
+        const stairsStr = formatNumber(item.flights_climbed ?? 0);
         
         return `
             <tr class="activity-tr" data-date="${dateIso}">
@@ -390,6 +451,7 @@ const renderActivityList = (data) => {
                 <td class="activity-td activity-td--steps">${escapeHtml(stepsStr)}</td>
                 <td class="activity-td activity-td--calories">${escapeHtml(kcalsStr)}</td>
                 <td class="activity-td activity-td--distance">${escapeHtml(kmStr)} km</td>
+                <td class="activity-td activity-td--flights-climbed">${escapeHtml(stairsStr)}</td>
             </tr>
         `;
     }).join('');
@@ -525,6 +587,7 @@ const getCombinedChartOptions = () => ({
                     if (label.includes('Steps')) return `Steps: ${formatNumber(value)}`;
                     if (label.includes('Calories')) return `Calories: ${formatNumber(Math.round(value))} kcal`;
                     if (label.includes('Distance')) return `Distance: ${formatNumber(value, 1)} km`;
+                    if (label.includes('Flights Climbed')) return `Flights Climbed: ${formatNumber(value)}`;
                     return `${label}: ${formatNumber(value)}`;
                 },
             },
@@ -595,6 +658,23 @@ const getCombinedChartOptions = () => ({
                 font: { size: 11 },
             },
         },
+        yFlightsClimbed: {
+            type: 'linear',
+            position: 'right',
+            beginAtZero: true,
+            grid: { display: false },
+            ticks: {
+                color: CONFIG.chartColors.flights_climbed.main,
+                font: { family: '-apple-system, BlinkMacSystemFont, sans-serif', size: 10 },
+            },
+            border: { display: false },
+            title: {
+                display: true,
+                text: 'Flights Climbed',
+                color: CONFIG.chartColors.flights_climbed.main,
+                font: { size: 11 },
+            },
+        },
     },
     elements: {
         point: {
@@ -636,6 +716,7 @@ const updateCombinedChart = (data) => {
     const stepsAvg = calcAverage(grouped.steps);
     const kcalsAvg = calcAverage(grouped.kcals);
     const kmAvg = calcAverage(grouped.km);
+    const stairsAvg = calcAverage(grouped.flights_climbed);
     
     const chartData = {
         labels: grouped.labels,
@@ -694,6 +775,24 @@ const updateCombinedChart = (data) => {
                 yAxisID: 'yKm',
                 fill: false,
             },
+            {
+                label: 'Flights Climbed',
+                data: grouped.flights_climbed,
+                borderColor: CONFIG.chartColors.flights_climbed.main,
+                backgroundColor: CONFIG.chartColors.flights_climbed.light,
+                yAxisID: 'yFlightsClimbed',
+                fill: false,
+            },
+            {
+                label: 'Flights Climbed Avg',
+                data: Array(grouped.labels.length).fill(stairsAvg),
+                borderColor: CONFIG.chartColors.flights_climbed.main,
+                borderWidth: 1,
+                borderDash: [5, 5],
+                pointRadius: 0,
+                yAxisID: 'yFlightsClimbed',
+                fill: false,
+            },
         ],
     };
     
@@ -701,12 +800,215 @@ const updateCombinedChart = (data) => {
         state.chart.destroy();
     }
     
+    // Clean up existing overlay
+    const existingOverlay = document.getElementById('chartSelectionOverlay');
+    if (existingOverlay) existingOverlay.remove();
+    
     console.log(`Creating combined chart with ${grouped.labels.length} data points (period: ${state.currentPeriod}, groupBy: ${state.groupBy})`);
     
     state.chart = new Chart(ctx, {
         type: 'line',
         data: chartData,
         options: getCombinedChartOptions(),
+    });
+    
+    // Setup drag selection
+    setupChartDragSelection(canvas, filteredData, grouped);
+};
+
+// ============================================
+// Chart Drag Selection
+// ============================================
+
+const setupChartDragSelection = (canvas, filteredData, grouped) => {
+    let isDragging = false;
+    let startX = null;
+    let selectionOverlay = null;
+    
+    // Create overlay canvas for selection rectangle
+    const createOverlay = () => {
+        // Remove existing overlay if present
+        const existing = document.getElementById('chartSelectionOverlay');
+        if (existing) existing.remove();
+        
+        const overlay = document.createElement('canvas');
+        overlay.id = 'chartSelectionOverlay';
+        overlay.style.position = 'absolute';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.zIndex = '10';
+        
+        const rect = canvas.getBoundingClientRect();
+        const container = canvas.parentElement;
+        const containerRect = container.getBoundingClientRect();
+        
+        overlay.style.top = (rect.top - containerRect.top) + 'px';
+        overlay.style.left = (rect.left - containerRect.left) + 'px';
+        
+        // Match canvas dimensions accounting for devicePixelRatio
+        const dpr = window.devicePixelRatio || 1;
+        overlay.width = canvas.width;
+        overlay.height = canvas.height;
+        overlay.style.width = rect.width + 'px';
+        overlay.style.height = rect.height + 'px';
+        
+        if (getComputedStyle(container).position === 'static') {
+            container.style.position = 'relative';
+        }
+        container.appendChild(overlay);
+        return overlay;
+    };
+    
+    const getChartPosition = (e) => {
+        if (!state.chart) return { x: 0, y: 0 };
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        return { x, y };
+    };
+    
+    const getDataIndexFromX = (x) => {
+        if (!state.chart) return null;
+        const chartArea = state.chart.chartArea;
+        const scale = state.chart.scales.x;
+        const value = scale.getValueForPixel(x);
+        const index = Math.round(value);
+        return Math.max(0, Math.min(index, grouped.labels.length - 1));
+    };
+    
+    const drawSelection = (startX, currentX) => {
+        if (!selectionOverlay || !state.chart) {
+            if (!selectionOverlay) {
+                selectionOverlay = createOverlay();
+            }
+            return;
+        }
+        const ctx = selectionOverlay.getContext('2d');
+        const chartArea = state.chart.chartArea;
+        
+        ctx.clearRect(0, 0, selectionOverlay.width, selectionOverlay.height);
+        
+        const left = Math.min(startX, currentX);
+        const right = Math.max(startX, currentX);
+        const width = right - left;
+        
+        // Ensure coordinates are within chart area
+        const drawLeft = Math.max(chartArea.left, Math.min(left, chartArea.right));
+        const drawRight = Math.max(chartArea.left, Math.min(right, chartArea.right));
+        const drawWidth = drawRight - drawLeft;
+        
+        if (drawWidth > 0) {
+            ctx.fillStyle = 'rgba(90, 200, 250, 0.2)';
+            ctx.fillRect(drawLeft, chartArea.top, drawWidth, chartArea.bottom - chartArea.top);
+            
+            ctx.strokeStyle = 'rgba(90, 200, 250, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(drawLeft, chartArea.top, drawWidth, chartArea.bottom - chartArea.top);
+        }
+    };
+    
+    const clearSelection = () => {
+        if (selectionOverlay) {
+            const ctx = selectionOverlay.getContext('2d');
+            ctx.clearRect(0, 0, selectionOverlay.width, selectionOverlay.height);
+        }
+        state.selection.start = null;
+        state.selection.end = null;
+        updateStatistics(state.healthData, state.currentPeriod, state.selection);
+    };
+    
+    const applySelection = (startX, endX) => {
+        const startIdx = getDataIndexFromX(startX);
+        const endIdx = getDataIndexFromX(endX);
+        
+        if (startIdx === null || endIdx === null) return;
+        
+        const minIdx = Math.min(startIdx, endIdx);
+        const maxIdx = Math.max(startIdx, endIdx);
+        
+        // Get dates from grouped data - map indices back to actual dates
+        const sortedData = [...filteredData].sort((a, b) => getDateOnly(a.date).localeCompare(getDateOnly(b.date)));
+        
+        if (sortedData.length === 0) return;
+        
+        // Map grouped indices to actual data dates
+        let startDate, endDate;
+        
+        if (state.groupBy === 'day') {
+            // For day grouping, each label corresponds to a day
+            // Map grouped index to sorted data index
+            const ratio = sortedData.length / grouped.labels.length;
+            const startDataIdx = Math.floor(minIdx * ratio);
+            const endDataIdx = Math.ceil((maxIdx + 1) * ratio) - 1;
+            startDate = sortedData[Math.max(0, startDataIdx)]?.date;
+            endDate = sortedData[Math.min(sortedData.length - 1, endDataIdx)]?.date;
+        } else if (state.groupBy === 'week') {
+            // For week grouping, map to week boundaries
+            const ratio = sortedData.length / grouped.labels.length;
+            const startDataIdx = Math.floor(minIdx * ratio);
+            const endDataIdx = Math.ceil((maxIdx + 1) * ratio) - 1;
+            startDate = sortedData[Math.max(0, startDataIdx)]?.date;
+            endDate = sortedData[Math.min(sortedData.length - 1, endDataIdx)]?.date;
+        } else {
+            // For month grouping
+            const ratio = sortedData.length / grouped.labels.length;
+            const startDataIdx = Math.floor(minIdx * ratio);
+            const endDataIdx = Math.ceil((maxIdx + 1) * ratio) - 1;
+            startDate = sortedData[Math.max(0, startDataIdx)]?.date;
+            endDate = sortedData[Math.min(sortedData.length - 1, endDataIdx)]?.date;
+        }
+        
+        if (startDate && endDate) {
+            state.selection.start = startDate;
+            state.selection.end = endDate;
+            updateStatistics(state.healthData, state.currentPeriod, state.selection);
+        }
+    };
+    
+    canvas.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return; // Only left mouse button
+        const pos = getChartPosition(e);
+        if (state.chart && pos.x >= state.chart.chartArea.left && pos.x <= state.chart.chartArea.right) {
+            isDragging = true;
+            startX = pos.x;
+            canvas.style.cursor = 'crosshair';
+            if (!selectionOverlay) {
+                selectionOverlay = createOverlay();
+            }
+        }
+    });
+    
+    canvas.addEventListener('mousemove', (e) => {
+        if (isDragging && startX !== null) {
+            const pos = getChartPosition(e);
+            drawSelection(startX, pos.x);
+        } else {
+            canvas.style.cursor = 'default';
+        }
+    });
+    
+    canvas.addEventListener('mouseup', (e) => {
+        if (isDragging && startX !== null) {
+            const pos = getChartPosition(e);
+            applySelection(startX, pos.x);
+            isDragging = false;
+            startX = null;
+            canvas.style.cursor = 'default';
+        }
+    });
+    
+    canvas.addEventListener('mouseleave', () => {
+        if (isDragging) {
+            isDragging = false;
+            startX = null;
+            canvas.style.cursor = 'default';
+        }
+    });
+    
+    // Double-click to clear selection
+    canvas.addEventListener('dblclick', () => {
+        clearSelection();
     });
 };
 
@@ -763,15 +1065,29 @@ const handlePeriodChange = (event) => {
     
     state.currentPeriod = btn.dataset.period;
     
+    // Clear selection when period changes
+    state.selection.start = null;
+    state.selection.end = null;
+    const overlay = document.getElementById('chartSelectionOverlay');
+    if (overlay) overlay.remove();
+    
     // Update groupBy options based on new period
     updateGroupByOptions(state.currentPeriod);
     
-    updateStatistics(state.healthData, state.currentPeriod);
+    updateStatistics(state.healthData, state.currentPeriod, state.selection);
     updateCombinedChart(state.healthData);
 };
 
 const handleGroupByChange = (event) => {
     state.groupBy = event.target.value;
+    
+    // Clear selection when groupBy changes
+    state.selection.start = null;
+    state.selection.end = null;
+    const overlay = document.getElementById('chartSelectionOverlay');
+    if (overlay) overlay.remove();
+    
+    updateStatistics(state.healthData, state.currentPeriod, state.selection);
     updateCombinedChart(state.healthData);
 };
 
@@ -850,7 +1166,7 @@ const initDashboard = async () => {
     console.log('Loaded health data:', state.healthData.length, 'records');
     
     updateTodayMetrics(state.healthData);
-    updateStatistics(state.healthData, state.currentPeriod);
+    updateStatistics(state.healthData, state.currentPeriod, state.selection);
     updateCombinedChart(state.healthData);
     renderActivityList(state.healthData);
     updateLastSync(state.healthData);

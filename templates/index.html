@@ -107,6 +107,31 @@
                         <span class="progress-label" id="kmGoalLabel">of 8 km goal</span>
                     </div>
                 </article>
+
+                <!-- Flights Climbed Card -->
+                <article class="metric-card metric-card--flights-climbed">
+                    <div class="metric-header">
+                        <div class="metric-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 20h16M4 16h16M4 12h16M4 8h16M4 4h16"/>
+                            </svg>
+                        </div>
+                        <span class="metric-label">Flights Climbed</span>
+                    </div>
+                    <div class="metric-value-container">
+                        <span class="metric-value" id="todayFlightsClimbed">--</span>
+                        <span class="metric-unit">flights</span>
+                    </div>
+                    <div class="metric-progress">
+                        <div class="progress-ring" id="flightsClimbedRing">
+                            <svg viewBox="0 0 36 36">
+                                <path class="progress-ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                <path class="progress-ring-fill" id="flightsClimbedProgress" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            </svg>
+                        </div>
+                        <span class="progress-label" id="flightsClimbedGoalLabel">of 50 goal</span>
+                    </div>
+                </article>
             </div>
         </section>
 
@@ -117,16 +142,16 @@
                 <div class="stats-controls">
                     <div class="period-selector">
                         <button class="period-btn" data-period="week">W</button>
-                        <button class="period-btn" data-period="month">M</button>
+                        <button class="period-btn active" data-period="month">M</button>
                         <button class="period-btn" data-period="year">Y</button>
-                        <button class="period-btn active" data-period="all">All</button>
+                        <button class="period-btn" data-period="all">All</button>
                     </div>
                     <div class="groupby-selector">
                         <label class="groupby-label">Group by</label>
                         <select id="groupBySelect" class="groupby-select">
-                            <option value="day">Day</option>
+                            <option value="day" selected>Day</option>
                             <option value="week">Week</option>
-                            <option value="month" selected>Month</option>
+                            <option value="month">Month</option>
                         </select>
                     </div>
                 </div>
@@ -146,6 +171,10 @@
                     <span class="stat-label">Total Distance</span>
                     <span class="stat-value" id="totalKm">--</span>
                 </div>
+                <div class="stat-item stat-item--flights-climbed">
+                    <span class="stat-label">Total Flights Climbed</span>
+                    <span class="stat-value" id="totalFlightsClimbed">--</span>
+                </div>
                 <div class="stat-item">
                     <span class="stat-label">Days Tracked</span>
                     <span class="stat-value" id="daysTracked">--</span>
@@ -155,16 +184,20 @@
             <!-- Averages Row -->
             <div class="stats-cards stats-cards--averages">
                 <div class="stat-item stat-item--steps">
-                    <span class="stat-label">Avg Steps</span>
+                    <span class="stat-label">Avg Daily Steps</span>
                     <span class="stat-value" id="avgSteps">--</span>
                 </div>
                 <div class="stat-item stat-item--calories">
-                    <span class="stat-label">Avg Active Calories</span>
+                    <span class="stat-label">Avg Daily Active Calories</span>
                     <span class="stat-value" id="avgKcals">--</span>
                 </div>
                 <div class="stat-item stat-item--distance">
-                    <span class="stat-label">Avg Distance</span>
+                    <span class="stat-label">Avg Daily Distance</span>
                     <span class="stat-value" id="avgKm">--</span>
+                </div>
+                <div class="stat-item stat-item--flights-climbed">
+                    <span class="stat-label">Avg Daily Flights Climbed</span>
+                    <span class="stat-value" id="avgFlightsClimbed">--</span>
                 </div>
             </div>
         </section>
@@ -206,6 +239,10 @@
                             </th>
                             <th class="activity-th activity-th--distance activity-th--sortable" data-sort="km">
                                 Distance
+                                <span class="sort-icon"></span>
+                            </th>
+                            <th class="activity-th activity-th--flights-climbed activity-th--sortable" data-sort="flights_climbed">
+                                Flights Climbed
                                 <span class="sort-icon"></span>
                             </th>
                         </tr>

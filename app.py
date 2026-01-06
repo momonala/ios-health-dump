@@ -56,6 +56,7 @@ def dump():
         steps=int(data["steps"]),
         kcals=float(data["kcals"]),
         km=float(data["km"]),
+        flights_climbed=int(data["flights_climbed"]) if data.get("flights_climbed") is not None else None,
         recorded_at=now,
     )
     row_count = upsert_health_dump(health_dump)

@@ -29,6 +29,7 @@ def sample_health_dump():
         steps=10000,
         kcals=500.5,
         km=8.2,
+        flights_climbed=50,
         recorded_at=datetime(2026, 1, 5, 14, 30, 0),
     )
 
@@ -41,6 +42,7 @@ def sample_health_dump_with_nones():
         steps=None,
         kcals=None,
         km=None,
+        flights_climbed=None,
         recorded_at=datetime(2026, 1, 6, 14, 30, 0),
     )
 
@@ -63,6 +65,7 @@ class TestUpsertHealthDump:
         assert result["steps"] == 10000
         assert result["kcals"] == 500.5
         assert result["km"] == 8.2
+        assert result["flights_climbed"] == 50
 
     def test_upsert_updates_existing_record_when_newer(self, temp_db_path, sample_health_dump):
         """upsert_health_dump updates existing record when recorded_at is newer."""
@@ -71,6 +74,7 @@ class TestUpsertHealthDump:
             steps=5000,
             kcals=250.0,
             km=4.0,
+            flights_climbed=25,
             recorded_at=datetime(2026, 1, 5, 10, 0, 0),
         )
 
@@ -86,6 +90,7 @@ class TestUpsertHealthDump:
         assert result["steps"] == 10000
         assert result["kcals"] == 500.5
         assert result["km"] == 8.2
+        assert result["flights_climbed"] == 50
 
     def test_upsert_skips_older_or_equal_record(self, temp_db_path, sample_health_dump):
         """upsert_health_dump skips when recorded_at is older or equal."""
@@ -96,6 +101,7 @@ class TestUpsertHealthDump:
             steps=5000,
             kcals=250.0,
             km=4.0,
+            flights_climbed=25,
             recorded_at=datetime(2026, 1, 5, 10, 0, 0),
         )
         equal_dump = HealthDump(
@@ -103,6 +109,7 @@ class TestUpsertHealthDump:
             steps=3000,
             kcals=150.0,
             km=2.0,
+            flights_climbed=15,
             recorded_at=datetime(2026, 1, 5, 14, 30, 0),
         )
 
@@ -116,6 +123,7 @@ class TestUpsertHealthDump:
         assert result["steps"] == 10000
         assert result["kcals"] == 500.5
         assert result["km"] == 8.2
+        assert result["flights_climbed"] == 50
 
     def test_upsert_handles_none_values(self, temp_db_path, sample_health_dump_with_nones):
         """upsert_health_dump handles None values for optional fields."""
@@ -130,6 +138,7 @@ class TestUpsertHealthDump:
         assert result["steps"] is None
         assert result["kcals"] is None
         assert result["km"] is None
+        assert result["flights_climbed"] is None
 
     def test_upsert_returns_correct_row_count(self, temp_db_path, sample_health_dump):
         """upsert_health_dump returns correct total row count."""
@@ -141,6 +150,7 @@ class TestUpsertHealthDump:
             steps=8000,
             kcals=400.0,
             km=6.5,
+            flights_climbed=30,
             recorded_at=datetime(2026, 1, 6, 14, 30, 0),
         )
         row_count2 = upsert_health_dump(dump2)
@@ -151,6 +161,7 @@ class TestUpsertHealthDump:
             steps=12000,
             kcals=600.0,
             km=10.0,
+            flights_climbed=60,
             recorded_at=datetime(2026, 1, 7, 14, 30, 0),
         )
         row_count3 = upsert_health_dump(dump3)
@@ -173,6 +184,7 @@ class TestGetAllHealthData:
             steps=10000,
             kcals=500.5,
             km=8.2,
+            flights_climbed=50,
             recorded_at=datetime(2026, 1, 5, 14, 30, 0),
         )
         dump2 = HealthDump(
@@ -180,6 +192,7 @@ class TestGetAllHealthData:
             steps=12000,
             kcals=600.0,
             km=10.0,
+            flights_climbed=60,
             recorded_at=datetime(2026, 1, 7, 14, 30, 0),
         )
         dump3 = HealthDump(
@@ -187,6 +200,7 @@ class TestGetAllHealthData:
             steps=8000,
             kcals=400.0,
             km=6.5,
+            flights_climbed=30,
             recorded_at=datetime(2026, 1, 6, 14, 30, 0),
         )
 
@@ -206,6 +220,7 @@ class TestGetAllHealthData:
         assert "steps" in record
         assert "kcals" in record
         assert "km" in record
+        assert "flights_climbed" in record
         assert "recorded_at" in record
         assert isinstance(record["recorded_at"], str)
         assert record["steps"] == 12000
@@ -221,6 +236,7 @@ class TestGetAllHealthData:
         assert record["steps"] is None
         assert record["kcals"] is None
         assert record["km"] is None
+        assert record["flights_climbed"] is None
 
     def test_get_all_health_data_fill_missing_dates_parameter(self, temp_db_path, sample_health_dump):
         """get_all_health_data accepts fill_missing_dates parameter (currently no-op)."""
