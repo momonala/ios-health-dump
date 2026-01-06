@@ -1,6 +1,6 @@
 service_name="ios-health-dump"
 service_port=5009
-python_version="3.12"
+
 
 set -e  # Exit immediately if a command exits with a non-zero status
 
@@ -14,7 +14,6 @@ else
 fi
 
 echo "✅ Installing project dependencies with uv"
-cd /home/mnalavadi/ios-health-dump
 uv sync
 
 echo "✅ Copying service file to systemd directory"

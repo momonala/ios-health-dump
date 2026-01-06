@@ -7,7 +7,7 @@ WorkingDirectory=/home/mnalavadi/ios-health-dump
 Type=simple
 ExecStart=/home/mnalavadi/.local/bin/uv run python git_commit_scheduler.py
  User=mnalavadi
- Environment=PATH=/home/mnalavadi/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ Environment=PATH=/home/mnalavadi/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
  [Install]
  WantedBy=multi-user.target

@@ -7,7 +7,11 @@ echo "🧪 Running tests..."
 uv run pytest
 
 echo "🖤 Running black..."
-uv run black .
+if ! uv run black . --check; then
+    echo "❌ Black found formatting issues. To auto fix, run:"
+    echo -e "\033[32muv run black .\033[0m"
+    exit 1
+fi
 
 echo "🧼 Running ruff check..."
 if ! uv run ruff check .; then
