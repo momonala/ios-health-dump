@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from pathlib import Path
 
 from flask import Flask
 from flask import jsonify
@@ -7,11 +8,17 @@ from flask import render_template
 from flask import request
 from flask import send_from_directory
 
-from datamodels import HealthDump
-from ios_health_dump import get_all_health_data
-from ios_health_dump import upsert_health_dump
+from src.datamodels import HealthDump
+from src.ios_health_dump import get_all_health_data
+from src.ios_health_dump import upsert_health_dump
 
-app = Flask(__name__, static_url_path="/static", static_folder="static", template_folder="templates")
+PROJECT_ROOT = Path(__file__).parent.parent
+app = Flask(
+    __name__,
+    static_url_path="/static",
+    static_folder=str(PROJECT_ROOT / "static"),
+    template_folder=str(PROJECT_ROOT / "templates"),
+)
 
 logging.basicConfig(level=logging.INFO)
 # logging.getLogger("werkzeug").setLevel(logging.WARNING)

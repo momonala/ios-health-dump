@@ -5,9 +5,8 @@
  [Service]
  WorkingDirectory=/home/mnalavadi/ios-health-dump
  Type=idle
-ExecStart=/home/mnalavadi/.local/bin/uv run python app.py
+ExecStart=/home/mnalavadi/.local/bin/uv run python -m src.app
 User=mnalavadi
-Environment=PATH=/home/mnalavadi/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
  [Install]
  WantedBy=multi-user.target

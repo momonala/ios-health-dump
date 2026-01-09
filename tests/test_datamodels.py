@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-from datamodels import HealthDump
+from src.datamodels import HealthDump
 
 
 @pytest.fixture

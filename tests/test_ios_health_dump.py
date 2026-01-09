@@ -4,19 +4,19 @@ from datetime import datetime
 
 import pytest
 
-from datamodels import HealthDump
-from db import TABLE_NAME
-from db import db_transaction
-from db import init_health_dumps_table
-from ios_health_dump import get_all_health_data
-from ios_health_dump import upsert_health_dump
+from src.datamodels import HealthDump
+from src.db import TABLE_NAME
+from src.db import db_transaction
+from src.db import init_health_dumps_table
+from src.ios_health_dump import get_all_health_data
+from src.ios_health_dump import upsert_health_dump
 
 
 @pytest.fixture
 def temp_db_path(tmp_path, monkeypatch):
     """Create a temporary database path for testing."""
     db_file = tmp_path / "test_health_dumps.db"
-    monkeypatch.setattr("db.DB_PATH", db_file)
+    monkeypatch.setattr("src.db.DB_PATH", db_file)
     init_health_dumps_table()
     return db_file
 

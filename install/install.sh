@@ -1,4 +1,5 @@
 service_name="ios-health-dump"
+scheduler_service_name="${service_name}-data-backup-scheduler"
 service_port=5009
 
 
@@ -18,11 +19,11 @@ uv sync
 
 echo "✅ Copying service file to systemd directory"
 sudo cp install/projects_${service_name}.service /lib/systemd/system/projects_${service_name}.service
-sudo cp install/projects_${service_name}_scheduler.service /lib/systemd/system/projects_${service_name}_scheduler.service
+sudo cp install/projects_${scheduler_service_name}.service /lib/systemd/system/projects_${scheduler_service_name}.service
 
 echo "✅ Setting permissions for the service file"
 sudo chmod 644 /lib/systemd/system/projects_${service_name}.service
-sudo chmod 644 /lib/systemd/system/projects_${service_name}_scheduler.service
+sudo chmod 644 /lib/systemd/system/projects_${scheduler_service_name}.service
 
 echo "✅ Reloading systemd daemon"
 sudo systemctl daemon-reload
@@ -30,11 +31,11 @@ sudo systemctl daemon-reexec
 
 echo "✅ Enabling the service: projects_${service_name}.service"
 sudo systemctl enable projects_${service_name}.service
-sudo systemctl enable projects_${service_name}_scheduler.service
+sudo systemctl enable projects_${scheduler_service_name}.service
 sudo systemctl restart projects_${service_name}.service
-sudo systemctl restart projects_${service_name}_scheduler.service
+sudo systemctl restart projects_${scheduler_service_name}.service
 sudo systemctl status projects_${service_name}.service --no-pager
-sudo systemctl status projects_${service_name}_scheduler.service --no-pager
+sudo systemctl status projects_${scheduler_service_name}.service --no-pager
 
 echo "✅ Adding Cloudflared service"
 /home/mnalavadi/add_cloudflared_service.sh ${service_name}.mnalavadi.org $service_port

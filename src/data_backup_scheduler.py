@@ -5,7 +5,7 @@ from datetime import datetime
 
 import schedule
 
-from db import DB_PATH
+from src.db import DB_PATH
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

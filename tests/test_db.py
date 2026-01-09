@@ -4,10 +4,10 @@ import sqlite3
 
 import pytest
 
-from db import TABLE_NAME
-from db import db_transaction
-from db import get_db_connection
-from db import init_health_dumps_table
+from src.db import TABLE_NAME
+from src.db import db_transaction
+from src.db import get_db_connection
+from src.db import init_health_dumps_table
 
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def temp_db_path(tmp_path):
 @pytest.fixture
 def mock_db_path(temp_db_path, monkeypatch):
     """Patch DB_PATH to use temporary database."""
-    monkeypatch.setattr("db.DB_PATH", temp_db_path)
+    monkeypatch.setattr("src.db.DB_PATH", temp_db_path)
     return temp_db_path
 
 

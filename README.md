@@ -27,7 +27,7 @@ flowchart LR
         Flask[Flask Server :5009]
     end
     subgraph Scheduler
-        Git[Git Commit Scheduler]
+        Git[Data Backup Scheduler]
     end
     
     Shortcut -->|POST /dump| Flask
@@ -58,18 +58,18 @@ uv sync
 ## Running
 
 ```bash
-uv run python app.py
+uv run python -m src.app
 ```
 
 Server runs at http://localhost:5009
 
 Open http://localhost:5009 in your browser to view the dashboard.
 
-### Git Commit Scheduler
+### Data Backup Scheduler
 
 Run the scheduler to auto-commit database changes hourly:
 ```bash
-uv run python git_commit_scheduler.py
+uv run python -m src.data_backup_scheduler
 ```
 
 The scheduler checks for database changes every hour and commits them to git. If a commit already exists for the current day, it will amend that commit instead of creating a new one, keeping the git history clean with one commit per day.
@@ -115,13 +115,18 @@ git commit --no-verify
 
 ```
 ios-health/
-├── app.py                    # Flask application & routes
-├── datamodels.py             # HealthDump dataclass
-├── db.py                     # SQLite connection utilities
-├── ios_health_dump.py        # Health dump upsert logic
-├── git_commit_scheduler.py   # Auto-commits DB changes hourly
-├── health_dumps.db           # SQLite database (generated)
-├── pyproject.toml            # Dependencies & tool config
+├── src/
+│   ├── app.py                    # Flask application & routes
+│   ├── datamodels.py             # HealthDump dataclass
+│   ├── db.py                     # SQLite connection utilities
+│   ├── ios_health_dump.py        # Health dump upsert logic
+│   └── data_backup_scheduler.py  # Auto-commits DB changes hourly
+│
+├── tests/                        # Test suite
+│   ├── test_app.py
+│   ├── test_datamodels.py
+│   ├── test_db.py
+│   └── test_ios_health_dump.py
 │
 ├── templates/
 │   └── index.html            # Dashboard HTML template
@@ -132,10 +137,13 @@ ios-health/
 │   └── js/
 │       └── dashboard.js      # Dashboard logic & Chart.js integration
 │
-└── install/
-    ├── install.sh                              # Setup script for Raspberry Pi
-    ├── projects_ios-health-dump.service        # Systemd service for Flask
-    └── projects_ios-health-dump_scheduler.service  # Systemd service for scheduler
+├── install/
+│   ├── install.sh                                      # Setup script for Raspberry Pi
+│   ├── projects_ios-health-dump.service                # Systemd service for Flask
+│   └── projects_ios-health-data-backup-scheduler.service  # Systemd service for scheduler
+│
+├── health_dumps.db           # SQLite database (generated)
+└── pyproject.toml            # Dependencies & tool config
 ```
 
 ## API Endpoints
