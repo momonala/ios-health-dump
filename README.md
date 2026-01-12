@@ -1,5 +1,8 @@
 # iOS Health Dump
 
+[![CI](https://github.com/momonala/ios-health/actions/workflows/ci.yml/badge.svg)](https://github.com/momonala/ios-health/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/momonala/ios-health/branch/main/graph/badge.svg)](https://codecov.io/gh/momonala/ios-health)
+
 Backend service and web dashboard for receiving, storing, and visualizing daily health metrics (steps, calories, distance, flights climbed) from iOS via Shortcuts.
 
 ## Tech Stack
@@ -152,14 +155,37 @@ ios-health/
 |----------|--------|-------------|
 | `/` | GET | Web dashboard (HTML) |
 | `/status` | GET | Health check |
-| `/api/health-data` | GET | Get all health data (JSON) |
+| `/api/health-data` | GET | Get health data with optional date filtering |
 | `/dump` | POST | Save health data from iOS |
 
 ### GET /api/health-data
 
-Returns all health data sorted by date (most recent first).
+Returns health data sorted by date (most recent first) with optional date filtering.
 
-Response:
+**Query Parameters:**
+- `date` (optional): Filter by specific date. Accepts:
+  - `today` - Returns today's data only
+  - `YYYY-MM-DD` - Returns data for specific date
+- `date_start` (optional): Start date for range filter (YYYY-MM-DD, inclusive)
+- `date_end` (optional): End date for range filter (YYYY-MM-DD, inclusive)
+
+**Examples:**
+
+```bash
+# Get all data
+GET /api/health-data
+
+# Get today's data only (optimized - single row query)
+GET /api/health-data?date=today
+
+# Get specific date
+GET /api/health-data?date=2026-01-03
+
+# Get date range
+GET /api/health-data?date_start=2026-01-01&date_end=2026-01-31
+```
+
+**Response:**
 ```json
 {
   "data": [
@@ -174,6 +200,8 @@ Response:
   ]
 }
 ```
+
+**Note:** Date filtering is performed at the SQL level for optimal performance.
 
 ### POST /dump
 
@@ -213,7 +241,9 @@ Response:
 
 The web dashboard provides an iOS Health App-inspired interface with:
 
-- **Today's Summary**: Large metric cards showing steps, calories, distance, and flights climbed with progress rings
+- **Today's Summary**: Large metric cards showing steps, calories, distance, and flights climbed with animated progress rings
+- **Optimized Loading**: Parallel API calls with SQL-level date filtering - today's data loads instantly (single row query) while historical data loads separately
+- **Animated Rings**: Progress rings animate smoothly from 0% to target percentage on page load using requestAnimationFrame
 - **Statistics**: Average values and totals for week/month/year periods
 - **Time Series Charts**: Interactive line charts for all metrics using Chart.js
 - **Recent Activity**: Sortable table with all activity data

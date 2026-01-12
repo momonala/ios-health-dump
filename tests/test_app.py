@@ -103,6 +103,138 @@ class TestGetHealthData:
         assert data[1]["date"] == "2026-01-05"
 
 
+class TestGetHealthDataWithFilters:
+    """Tests for /api/health-data endpoint with date filtering."""
+
+    def test_get_health_data_with_date_today_returns_empty_list_when_empty(self, client):
+        """Get health data with date=today returns empty list when database is empty."""
+        response = client.get("/api/health-data?date=today")
+
+        assert response.status_code == 200
+        assert response.json == {"data": []}
+
+    def test_get_health_data_with_date_today_returns_today_only(self, client, temp_db_path):
+        """Get health data with date=today returns only today's record."""
+        today = datetime.now().date().isoformat()
+        yesterday = "2026-01-05"
+
+        dump_today = HealthDump(
+            date=today,
+            steps=10000,
+            kcals=500.5,
+            km=8.2,
+            flights_climbed=50,
+            recorded_at=datetime.now(),
+        )
+        dump_yesterday = HealthDump(
+            date=yesterday,
+            steps=8000,
+            kcals=400.0,
+            km=6.5,
+            flights_climbed=30,
+            recorded_at=datetime(2026, 1, 5, 14, 30, 0),
+        )
+
+        upsert_health_dump(dump_yesterday)
+        upsert_health_dump(dump_today)
+
+        response = client.get("/api/health-data?date=today")
+
+        assert response.status_code == 200
+        data = response.json["data"]
+        assert len(data) == 1
+        assert data[0]["date"] == today
+        assert data[0]["steps"] == 10000
+        assert data[0]["kcals"] == 500.5
+
+    def test_get_health_data_with_date_today_returns_empty_when_no_today_record(self, client, temp_db_path):
+        """Get health data with date=today returns empty list when there's no today record."""
+        yesterday = "2026-01-05"
+
+        dump_yesterday = HealthDump(
+            date=yesterday,
+            steps=8000,
+            kcals=400.0,
+            km=6.5,
+            flights_climbed=30,
+            recorded_at=datetime(2026, 1, 5, 14, 30, 0),
+        )
+
+        upsert_health_dump(dump_yesterday)
+
+        response = client.get("/api/health-data?date=today")
+
+        assert response.status_code == 200
+        assert response.json == {"data": []}
+
+    def test_get_health_data_with_date_range(self, client, temp_db_path):
+        """Get health data with date_start and date_end filters correctly."""
+        dump1 = HealthDump(
+            date="2026-01-05",
+            steps=10000,
+            kcals=500.5,
+            km=8.2,
+            flights_climbed=50,
+            recorded_at=datetime(2026, 1, 5, 14, 30, 0),
+        )
+        dump2 = HealthDump(
+            date="2026-01-06",
+            steps=8000,
+            kcals=400.0,
+            km=6.5,
+            flights_climbed=30,
+            recorded_at=datetime(2026, 1, 6, 14, 30, 0),
+        )
+        dump3 = HealthDump(
+            date="2026-01-07",
+            steps=9000,
+            kcals=450.0,
+            km=7.0,
+            flights_climbed=40,
+            recorded_at=datetime(2026, 1, 7, 14, 30, 0),
+        )
+
+        upsert_health_dump(dump1)
+        upsert_health_dump(dump2)
+        upsert_health_dump(dump3)
+
+        response = client.get("/api/health-data?date_start=2026-01-06&date_end=2026-01-06")
+
+        assert response.status_code == 200
+        data = response.json["data"]
+        assert len(data) == 1
+        assert data[0]["date"] == "2026-01-06"
+
+    def test_get_health_data_with_specific_date_shortcut(self, client, temp_db_path):
+        """Get health data with date=YYYY-MM-DD returns that date only."""
+        dump1 = HealthDump(
+            date="2026-01-05",
+            steps=10000,
+            kcals=500.5,
+            km=8.2,
+            flights_climbed=50,
+            recorded_at=datetime(2026, 1, 5, 14, 30, 0),
+        )
+        dump2 = HealthDump(
+            date="2026-01-06",
+            steps=8000,
+            kcals=400.0,
+            km=6.5,
+            flights_climbed=30,
+            recorded_at=datetime(2026, 1, 6, 14, 30, 0),
+        )
+
+        upsert_health_dump(dump1)
+        upsert_health_dump(dump2)
+
+        response = client.get("/api/health-data?date=2026-01-05")
+
+        assert response.status_code == 200
+        data = response.json["data"]
+        assert len(data) == 1
+        assert data[0]["date"] == "2026-01-05"
+
+
 class TestDump:
     """Tests for /dump POST endpoint."""
 

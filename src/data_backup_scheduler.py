@@ -22,6 +22,14 @@ def run_command(cmd, check=True):
     return result.stdout.strip()
 
 
+def force_push_to_git(command: list[str], msg: str):
+    try:
+        run_command(command)
+        logger.info(msg)
+    except subprocess.CalledProcessError:
+        logger.warning(f"❌ Failed to push to git for {command=} with {msg=}")
+
+
 def commit_if_changed():
     diff = run_command(["git", "diff", file_to_commit], check=False)
     if not diff:
@@ -42,12 +50,12 @@ def commit_if_changed():
 
     if should_amend:
         run_command(["git", "commit", "--amend", "-m", msg])
-        run_command(["git", "push", "--force", "origin", BRANCH])
-        logger.info(f"✅ [{datetime.now()}] Changes amended to existing commit for {today}.")
+        msg = f"✅ [{datetime.now()}] Changes amended and force pushed to existing commit for {today} with {msg=}."
+        force_push_to_git(["git", "push", "--force", "origin", BRANCH], msg)
     else:
         run_command(["git", "commit", "-m", msg])
-        run_command(["git", "push", "origin", BRANCH])
-        logger.info(f"✅ [{datetime.now()}] Changes committed for {today}.")
+        msg = f"✅ [{datetime.now()}] Changes committed and pushed for {today} with {msg=}."
+        force_push_to_git(["git", "push", "origin", BRANCH], msg)
 
     run_command(["cp", file_to_commit, f"{file_to_commit}.bk"])
 

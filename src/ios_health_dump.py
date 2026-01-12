@@ -43,23 +43,43 @@ def upsert_health_dump(health_dump: HealthDump) -> int:
         return total_rows
 
 
-def get_all_health_data(fill_missing_dates: bool = True) -> list[dict[str, any]]:
-    """Get all health data from the database, sorted by date (most recent first).
+def get_all_health_data(
+    fill_missing_dates: bool = True,
+    date_start: str | None = None,
+    date_end: str | None = None,
+) -> list[dict[str, any]]:
+    """Get health data from the database, sorted by date (most recent first).
 
     Args:
         fill_missing_dates: If True, fill missing dates after August 1, 2022 with historical averages
+        date_start: Optional start date (YYYY-MM-DD) for filtering. Inclusive.
+        date_end: Optional end date (YYYY-MM-DD) for filtering. Inclusive.
 
     Returns:
         List of health data dictionaries
     """
     with db_transaction() as (conn, cursor):
-        cursor.execute(
-            f"""
+        where_clauses = []
+        params = []
+
+        if date_start:
+            where_clauses.append("date >= ?")
+            params.append(date_start)
+
+        if date_end:
+            where_clauses.append("date <= ?")
+            params.append(date_end)
+
+        where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+
+        query = f"""
             SELECT date, steps, kcals, km, flights_climbed, recorded_at 
             FROM {TABLE_NAME} 
+            {where_sql}
             ORDER BY date DESC
         """
-        )
+
+        cursor.execute(query, params)
         rows = cursor.fetchall()
 
     data = [

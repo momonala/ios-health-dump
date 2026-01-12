@@ -45,8 +45,25 @@ def status():
 
 @app.route("/api/health-data", methods=["GET"])
 def get_health_data():
-    """Get all health data for the dashboard."""
-    data = get_all_health_data()
+    """Get health data for the dashboard with optional date filtering.
+
+    Query params:
+        date_start: YYYY-MM-DD format (inclusive)
+        date_end: YYYY-MM-DD format (inclusive)
+        date: shortcut for date_start=date_end (e.g., 'today', '2026-01-12')
+    """
+    date_param = request.args.get("date")
+    date_start = request.args.get("date_start")
+    date_end = request.args.get("date_end")
+
+    # Handle 'date' shortcut parameter
+    if date_param:
+        if date_param.lower() == "today":
+            date_start = date_end = datetime.now().date().isoformat()
+        else:
+            date_start = date_end = date_param
+
+    data = get_all_health_data(date_start=date_start, date_end=date_end)
     return jsonify({"data": data})
 
 

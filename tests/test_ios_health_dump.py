@@ -246,3 +246,113 @@ class TestGetAllHealthData:
         result_true = get_all_health_data(fill_missing_dates=True)
 
         assert result_false == result_true
+
+    def test_get_all_health_data_filters_by_date_start(self, temp_db_path):
+        """get_all_health_data filters by date_start at SQL level."""
+        dump1 = HealthDump(
+            date="2026-01-05",
+            steps=10000,
+            kcals=500.5,
+            km=8.2,
+            flights_climbed=50,
+            recorded_at=datetime(2026, 1, 5, 14, 30, 0),
+        )
+        dump2 = HealthDump(
+            date="2026-01-06",
+            steps=8000,
+            kcals=400.0,
+            km=6.5,
+            flights_climbed=30,
+            recorded_at=datetime(2026, 1, 6, 14, 30, 0),
+        )
+        dump3 = HealthDump(
+            date="2026-01-07",
+            steps=9000,
+            kcals=450.0,
+            km=7.0,
+            flights_climbed=40,
+            recorded_at=datetime(2026, 1, 7, 14, 30, 0),
+        )
+
+        upsert_health_dump(dump1)
+        upsert_health_dump(dump2)
+        upsert_health_dump(dump3)
+
+        result = get_all_health_data(date_start="2026-01-06")
+
+        assert len(result) == 2
+        assert result[0]["date"] == "2026-01-07"
+        assert result[1]["date"] == "2026-01-06"
+
+    def test_get_all_health_data_filters_by_date_end(self, temp_db_path):
+        """get_all_health_data filters by date_end at SQL level."""
+        dump1 = HealthDump(
+            date="2026-01-05",
+            steps=10000,
+            kcals=500.5,
+            km=8.2,
+            flights_climbed=50,
+            recorded_at=datetime(2026, 1, 5, 14, 30, 0),
+        )
+        dump2 = HealthDump(
+            date="2026-01-06",
+            steps=8000,
+            kcals=400.0,
+            km=6.5,
+            flights_climbed=30,
+            recorded_at=datetime(2026, 1, 6, 14, 30, 0),
+        )
+        dump3 = HealthDump(
+            date="2026-01-07",
+            steps=9000,
+            kcals=450.0,
+            km=7.0,
+            flights_climbed=40,
+            recorded_at=datetime(2026, 1, 7, 14, 30, 0),
+        )
+
+        upsert_health_dump(dump1)
+        upsert_health_dump(dump2)
+        upsert_health_dump(dump3)
+
+        result = get_all_health_data(date_end="2026-01-06")
+
+        assert len(result) == 2
+        assert result[0]["date"] == "2026-01-06"
+        assert result[1]["date"] == "2026-01-05"
+
+    def test_get_all_health_data_filters_by_date_range(self, temp_db_path):
+        """get_all_health_data filters by both date_start and date_end."""
+        dump1 = HealthDump(
+            date="2026-01-05",
+            steps=10000,
+            kcals=500.5,
+            km=8.2,
+            flights_climbed=50,
+            recorded_at=datetime(2026, 1, 5, 14, 30, 0),
+        )
+        dump2 = HealthDump(
+            date="2026-01-06",
+            steps=8000,
+            kcals=400.0,
+            km=6.5,
+            flights_climbed=30,
+            recorded_at=datetime(2026, 1, 6, 14, 30, 0),
+        )
+        dump3 = HealthDump(
+            date="2026-01-07",
+            steps=9000,
+            kcals=450.0,
+            km=7.0,
+            flights_climbed=40,
+            recorded_at=datetime(2026, 1, 7, 14, 30, 0),
+        )
+
+        upsert_health_dump(dump1)
+        upsert_health_dump(dump2)
+        upsert_health_dump(dump3)
+
+        result = get_all_health_data(date_start="2026-01-06", date_end="2026-01-06")
+
+        assert len(result) == 1
+        assert result[0]["date"] == "2026-01-06"

@@ -292,9 +292,37 @@ const updateText = (id, value) => {
     if (el) el.textContent = value;
 };
 
-const updateProgressRing = (id, percentage) => {
+const updateProgressRing = (id, percentage, animated = false) => {
     const el = document.getElementById(id);
-    if (el) el.setAttribute('stroke-dasharray', `${percentage}, 100`);
+    if (!el) return;
+    
+    if (animated) {
+        // Animate from 0 to target percentage
+        el.setAttribute('stroke-dasharray', '0, 100');
+        
+        // Use requestAnimationFrame for smooth animation
+        const duration = 2000;
+        const startTime = performance.now();
+        
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // ease-out-expo: smooth, natural deceleration
+            const easeOutExpo = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            const currentPercentage = easeOutExpo * percentage;
+            
+            el.setAttribute('stroke-dasharray', `${currentPercentage}, 100`);
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        
+        requestAnimationFrame(animate);
+    } else {
+        el.setAttribute('stroke-dasharray', `${percentage}, 100`);
+    }
 };
 
 const updateHeaderDate = () => {
@@ -306,19 +334,20 @@ const updateHeaderDate = () => {
     updateText('headerDate', formatted);
 };
 
-const updateTodayMetrics = (data) => {
-    const today = getTodayISO();
-    const todayData = data.find(d => getDateOnly(d.date) === today) || { steps: 0, kcals: 0, km: 0, flights_climbed: 0 };
+const updateTodayMetrics = (todayData, animated = false) => {
+    if (!todayData) {
+        todayData = { steps: 0, kcals: 0, km: 0, flights_climbed: 0 };
+    }
     
     updateText('todaySteps', formatNumber(todayData.steps));
     updateText('todayKcals', formatNumber(Math.round(todayData.kcals ?? 0)));
     updateText('todayKm', formatNumber(todayData.km, 1));
     updateText('todayFlightsClimbed', formatNumber(todayData.flights_climbed ?? 0));
     
-    updateProgressRing('stepsProgress', calcPercentage(todayData.steps ?? 0, CONFIG.goals.steps));
-    updateProgressRing('kcalsProgress', calcPercentage(todayData.kcals ?? 0, CONFIG.goals.kcals));
-    updateProgressRing('kmProgress', calcPercentage(todayData.km ?? 0, CONFIG.goals.km));
-    updateProgressRing('flightsClimbedProgress', calcPercentage(todayData.flights_climbed ?? 0, CONFIG.goals.flights_climbed));
+    updateProgressRing('stepsProgress', calcPercentage(todayData.steps ?? 0, CONFIG.goals.steps), animated);
+    updateProgressRing('kcalsProgress', calcPercentage(todayData.kcals ?? 0, CONFIG.goals.kcals), animated);
+    updateProgressRing('kmProgress', calcPercentage(todayData.km ?? 0, CONFIG.goals.km), animated);
+    updateProgressRing('flightsClimbedProgress', calcPercentage(todayData.flights_climbed ?? 0, CONFIG.goals.flights_climbed), animated);
     
     updateText('stepsGoalLabel', `of ${formatNumber(CONFIG.goals.steps)} goal`);
     updateText('kcalsGoalLabel', `of ${formatNumber(CONFIG.goals.kcals)} goal`);
@@ -1148,7 +1177,14 @@ const initEventListeners = () => {
 // Data Fetching & Init
 // ============================================
 
-const fetchHealthData = async () => {
+const fetchTodayData = async () => {
+    const response = await fetch(`${CONFIG.apiEndpoint}?date=today`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const json = await response.json();
+    return json.data.length > 0 ? json.data[0] : null;
+};
+
+const fetchAllHealthData = async () => {
     const response = await fetch(CONFIG.apiEndpoint);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const json = await response.json();
@@ -1162,10 +1198,22 @@ const initDashboard = async () => {
     // Initialize groupBy options based on default period
     updateGroupByOptions(state.currentPeriod);
     
-    state.healthData = await fetchHealthData();
-    console.log('Loaded health data:', state.healthData.length, 'records');
+    // Fetch today's data first (fast) and historical data in parallel (slower)
+    const [todayData, allHealthData] = await Promise.all([
+        fetchTodayData(),
+        fetchAllHealthData(),
+    ]);
     
-    updateTodayMetrics(state.healthData);
+    console.log('Loaded today data:', todayData);
+    console.log('Loaded all health data:', allHealthData.length, 'records');
+    
+    // Update state
+    state.healthData = allHealthData;
+    
+    // Update today metrics immediately with animation
+    updateTodayMetrics(todayData, true);
+    
+    // Update other sections with historical data
     updateStatistics(state.healthData, state.currentPeriod, state.selection);
     updateCombinedChart(state.healthData);
     renderActivityList(state.healthData);
