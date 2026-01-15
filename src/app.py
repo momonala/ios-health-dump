@@ -21,7 +21,7 @@ app = Flask(
 )
 
 logging.basicConfig(level=logging.INFO)
-# logging.getLogger("werkzeug").setLevel(logging.WARNING)
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
@@ -75,12 +75,14 @@ def dump():
         return jsonify({"status": "error", "message": "Missing required fields: steps, kcals, km"}), 400
 
     now = datetime.now()
+    weight = float(data["weight"].replace(",", ".")) if data.get("weight") else None
     health_dump = HealthDump(
         date=now.date().isoformat(),
         steps=int(data["steps"]),
         kcals=float(data["kcals"]),
         km=float(data["km"]),
         flights_climbed=int(data["flights_climbed"]) if data.get("flights_climbed") is not None else None,
+        weight=weight,
         recorded_at=now,
     )
     row_count = upsert_health_dump(health_dump)

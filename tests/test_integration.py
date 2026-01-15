@@ -80,6 +80,7 @@ def test_upsert_logic_with_timestamps(temp_db_path):
         kcals=250.0,
         km=4.0,
         flights_climbed=25,
+        weight=73.0,
         recorded_at=datetime(2026, 1, 5, 10, 0, 0),
     )
     newer = HealthDump(
@@ -88,6 +89,7 @@ def test_upsert_logic_with_timestamps(temp_db_path):
         kcals=500.0,
         km=8.0,
         flights_climbed=50,
+        weight=72.5,
         recorded_at=datetime(2026, 1, 5, 20, 0, 0),
     )
 
@@ -109,6 +111,7 @@ def test_api_returns_sorted_data(client, temp_db_path):
             kcals=500.0,
             km=8.0,
             flights_climbed=50,
+            weight=72.5,
             recorded_at=datetime.fromisoformat(f"{date_str}T14:30:00"),
         )
         upsert_health_dump(dump)
@@ -138,3 +141,35 @@ def test_health_check_endpoint(client):
     response = client.get("/status")
     assert response.status_code == 200
     assert response.json == {"status": "ok"}
+
+
+def test_weight_merging_from_older_csv(temp_db_path):
+    """Test that weight from older CSV data is merged into newer DB record."""
+    newer_record = HealthDump(
+        date="2026-01-05",
+        steps=10000,
+        kcals=500.0,
+        km=8.0,
+        flights_climbed=50,
+        weight=None,
+        recorded_at=datetime(2026, 1, 5, 20, 0, 0),
+    )
+    older_csv_record = HealthDump(
+        date="2026-01-05",
+        steps=5000,
+        kcals=250.0,
+        km=4.0,
+        flights_climbed=25,
+        weight=72.5,
+        recorded_at=datetime(2026, 1, 5, 10, 0, 0),
+    )
+
+    upsert_health_dump(newer_record)
+    upsert_health_dump(older_csv_record)
+
+    with db_transaction() as (conn, cursor):
+        cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE date = ?", ("2026-01-05",))
+        result = cursor.fetchone()
+
+    assert result["steps"] == 10000
+    assert result["weight"] == 72.5

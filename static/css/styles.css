@@ -13,6 +13,8 @@
     --color-distance-light: rgba(52, 199, 89, 0.15);
     --color-flights-climbed: #AF52DE;
     --color-flights-climbed-light: rgba(175, 82, 222, 0.15);
+    --color-weight: #FF6B9D;
+    --color-weight-light: rgba(255, 107, 157, 0.15);
     
     /* Neutrals */
     --color-bg: #000000;
@@ -215,6 +217,10 @@ body {
     background: linear-gradient(90deg, var(--color-flights-climbed), #BF5FEF);
 }
 
+.metric-card--weight::before {
+    background: linear-gradient(90deg, var(--color-weight), #FF8FB3);
+}
+
 .metric-card:hover {
     background: var(--color-surface-elevated);
     transform: translateY(-2px);
@@ -311,6 +317,18 @@ body {
 
 .metric-card--flights-climbed .metric-value {
     color: var(--color-flights-climbed);
+}
+
+.metric-card--weight .metric-icon {
+    color: var(--color-weight);
+}
+
+.metric-card--weight .metric-value {
+    color: var(--color-weight);
+}
+
+.metric-card--weight .progress-ring-fill {
+    stroke: var(--color-weight);
 }
 
 .metric-unit {
@@ -484,14 +502,14 @@ body {
     margin-bottom: 0;
 }
 
-/* Grouped stats - 4 columns on desktop, 2 on mobile */
+/* Grouped stats - responsive grid layout */
 .stats-cards--grouped {
     grid-template-columns: repeat(2, 1fr);
 }
 
 @media (min-width: 768px) {
     .stats-cards--grouped {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
 }
 
@@ -535,6 +553,10 @@ body {
     background: var(--color-flights-climbed);
 }
 
+.stat-card--weight::before {
+    background: var(--color-weight);
+}
+
 .stat-card-title {
     display: block;
     font-size: var(--font-size-xs);
@@ -558,6 +580,10 @@ body {
 
 .stat-card--flights-climbed .stat-card-title {
     color: var(--color-flights-climbed);
+}
+
+.stat-card--weight .stat-card-title {
+    color: var(--color-weight);
 }
 
 .stat-card-values {
@@ -602,6 +628,10 @@ body {
 
 .stat-card--flights-climbed .stat-card-value {
     color: var(--color-flights-climbed);
+}
+
+.stat-card--weight .stat-card-value {
+    color: var(--color-weight);
 }
 
 /* ---------- Charts Section ---------- */
@@ -793,7 +823,8 @@ body {
 .activity-th--steps,
 .activity-th--calories,
 .activity-th--distance,
-.activity-th--flights-climbed {
+.activity-th--flights-climbed,
+.activity-th--weight {
     text-align: right;
     width: 80px;
 }
@@ -802,6 +833,7 @@ body {
 .activity-th--calories { color: var(--color-calories); }
 .activity-th--distance { color: var(--color-distance); }
 .activity-th--flights-climbed { color: var(--color-flights-climbed); }
+.activity-th--weight { color: var(--color-weight); }
 
 .activity-th--steps.sort-asc .sort-icon::after,
 .activity-th--steps.sort-desc .sort-icon::after { color: var(--color-steps); }
@@ -811,6 +843,8 @@ body {
 .activity-th--distance.sort-desc .sort-icon::after { color: var(--color-distance); }
 .activity-th--flights-climbed.sort-asc .sort-icon::after,
 .activity-th--flights-climbed.sort-desc .sort-icon::after { color: var(--color-flights-climbed); }
+.activity-th--weight.sort-asc .sort-icon::after,
+.activity-th--weight.sort-desc .sort-icon::after { color: var(--color-weight); }
 
 .activity-tr {
     transition: background var(--transition-base);
@@ -848,7 +882,8 @@ body {
 .activity-td--steps,
 .activity-td--calories,
 .activity-td--distance,
-.activity-td--flights-climbed {
+.activity-td--flights-climbed,
+.activity-td--weight {
     text-align: right;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -858,6 +893,7 @@ body {
 .activity-td--calories { color: var(--color-calories); }
 .activity-td--distance { color: var(--color-distance); }
 .activity-td--flights-climbed { color: var(--color-flights-climbed); }
+.activity-td--weight { color: var(--color-weight); }
 
 /* Results Info */
 .activity-results-info {
@@ -971,7 +1007,8 @@ body {
     .activity-th--steps,
     .activity-th--calories,
     .activity-th--distance,
-    .activity-th--flights-climbed {
+    .activity-th--flights-climbed,
+    .activity-th--weight {
         width: 60px;
     }
     

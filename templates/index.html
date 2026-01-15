@@ -185,6 +185,29 @@
                     </div>
                 </div>
 
+                <!-- Calories Card -->
+                <div class="stat-card stat-card--calories">
+                    <span class="stat-card-title">Calories</span>
+                    <div class="stat-card-values">
+                        <div class="stat-card-row">
+                            <span class="stat-card-label">Min</span>
+                            <span class="stat-card-value" id="caloriesMin">--</span>
+                        </div>
+                        <div class="stat-card-row">
+                            <span class="stat-card-label">Max</span>
+                            <span class="stat-card-value" id="caloriesMax">--</span>
+                        </div>
+                        <div class="stat-card-row">
+                            <span class="stat-card-label">Avg</span>
+                            <span class="stat-card-value" id="caloriesAvg">--</span>
+                        </div>
+                        <div class="stat-card-row">
+                            <span class="stat-card-label">Total</span>
+                            <span class="stat-card-value" id="caloriesTotal">--</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Distance Card -->
                 <div class="stat-card stat-card--distance">
                     <span class="stat-card-title">Distance</span>
@@ -231,25 +254,25 @@
                     </div>
                 </div>
 
-                <!-- Calories Card -->
-                <div class="stat-card stat-card--calories">
-                    <span class="stat-card-title">Calories</span>
+                <!-- Weight Card -->
+                <div class="stat-card stat-card--weight">
+                    <span class="stat-card-title">Weight</span>
                     <div class="stat-card-values">
                         <div class="stat-card-row">
                             <span class="stat-card-label">Min</span>
-                            <span class="stat-card-value" id="caloriesMin">--</span>
+                            <span class="stat-card-value" id="weightMin">--</span>
                         </div>
                         <div class="stat-card-row">
                             <span class="stat-card-label">Max</span>
-                            <span class="stat-card-value" id="caloriesMax">--</span>
+                            <span class="stat-card-value" id="weightMax">--</span>
                         </div>
                         <div class="stat-card-row">
                             <span class="stat-card-label">Avg</span>
-                            <span class="stat-card-value" id="caloriesAvg">--</span>
+                            <span class="stat-card-value" id="weightAvg">--</span>
                         </div>
                         <div class="stat-card-row">
-                            <span class="stat-card-label">Total</span>
-                            <span class="stat-card-value" id="caloriesTotal">--</span>
+                            <span class="stat-card-label">Latest</span>
+                            <span class="stat-card-value" id="weightLatest">--</span>
                         </div>
                     </div>
                 </div>
@@ -297,6 +320,10 @@
                             </th>
                             <th class="activity-th activity-th--flights-climbed activity-th--sortable" data-sort="flights_climbed">
                                 Flights
+                                <span class="sort-icon"></span>
+                            </th>
+                            <th class="activity-th activity-th--weight activity-th--sortable" data-sort="weight">
+                                Weight
                                 <span class="sort-icon"></span>
                             </th>
                         </tr>

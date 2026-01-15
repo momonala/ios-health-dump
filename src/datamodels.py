@@ -9,6 +9,7 @@ class HealthDump:
     kcals: float | None
     km: float | None
     flights_climbed: int | None
+    weight: float | None
     recorded_at: datetime  # Actual timestamp when this was recorded
 
     def to_dict(self) -> dict:
@@ -18,6 +19,7 @@ class HealthDump:
             "kcals": self.kcals,
             "km": self.km,
             "flights_climbed": self.flights_climbed,
+            "weight": self.weight,
             "recorded_at": self.recorded_at.isoformat(),
         }
 
@@ -35,5 +37,6 @@ class HealthDump:
             kcals=data["kcals"],
             km=data["km"],
             flights_climbed=data.get("flights_climbed"),
+            weight=data.get("weight"),
             recorded_at=recorded_at,
         )

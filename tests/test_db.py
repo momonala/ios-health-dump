@@ -72,8 +72,8 @@ class TestDbTransaction:
         with pytest.raises(ValueError):
             with db_transaction() as (conn, cursor):
                 cursor.execute(
-                    f"INSERT INTO {TABLE_NAME} (date, steps, kcals, km, recorded_at) VALUES (?, ?, ?, ?, ?)",
-                    ("2026-01-05", 10000, 500.5, 8.2, "2026-01-05T14:30:00"),
+                    f"INSERT INTO {TABLE_NAME} (date, steps, kcals, km, weight, recorded_at) VALUES (?, ?, ?, ?, ?, ?)",
+                    ("2026-01-05", 10000, 500.5, 8.2, 72.5, "2026-01-05T14:30:00"),
                 )
                 raise ValueError("Test exception")
 
@@ -116,6 +116,7 @@ class TestInitHealthDumpsTable:
         assert "steps" in column_names
         assert "kcals" in column_names
         assert "km" in column_names
+        assert "weight" in column_names
         assert "recorded_at" in column_names
 
         date_col = next(col for col in columns if col[1] == "date")
@@ -127,8 +128,8 @@ class TestInitHealthDumpsTable:
 
         with db_transaction() as (conn, cursor):
             cursor.execute(
-                f"INSERT INTO {TABLE_NAME} (date, steps, kcals, km, recorded_at) VALUES (?, ?, ?, ?, ?)",
-                ("2026-01-05", 10000, 500.5, 8.2, "2026-01-05T14:30:00"),
+                f"INSERT INTO {TABLE_NAME} (date, steps, kcals, km, weight, recorded_at) VALUES (?, ?, ?, ?, ?, ?)",
+                ("2026-01-05", 10000, 500.5, 8.2, 72.5, "2026-01-05T14:30:00"),
             )
 
         init_health_dumps_table()

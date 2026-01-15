@@ -80,6 +80,7 @@ class TestGetHealthData:
             kcals=500.5,
             km=8.2,
             flights_climbed=50,
+            weight=72.5,
             recorded_at=datetime(2026, 1, 5, 14, 30, 0),
         )
         dump2 = HealthDump(
@@ -88,6 +89,7 @@ class TestGetHealthData:
             kcals=400.0,
             km=6.5,
             flights_climbed=30,
+            weight=71.0,
             recorded_at=datetime(2026, 1, 6, 14, 30, 0),
         )
 
@@ -124,6 +126,7 @@ class TestGetHealthDataWithFilters:
             kcals=500.5,
             km=8.2,
             flights_climbed=50,
+            weight=72.5,
             recorded_at=datetime.now(),
         )
         dump_yesterday = HealthDump(
@@ -132,6 +135,7 @@ class TestGetHealthDataWithFilters:
             kcals=400.0,
             km=6.5,
             flights_climbed=30,
+            weight=71.0,
             recorded_at=datetime(2026, 1, 5, 14, 30, 0),
         )
 
@@ -157,6 +161,7 @@ class TestGetHealthDataWithFilters:
             kcals=400.0,
             km=6.5,
             flights_climbed=30,
+            weight=71.0,
             recorded_at=datetime(2026, 1, 5, 14, 30, 0),
         )
 
@@ -175,6 +180,7 @@ class TestGetHealthDataWithFilters:
             kcals=500.5,
             km=8.2,
             flights_climbed=50,
+            weight=72.5,
             recorded_at=datetime(2026, 1, 5, 14, 30, 0),
         )
         dump2 = HealthDump(
@@ -183,6 +189,7 @@ class TestGetHealthDataWithFilters:
             kcals=400.0,
             km=6.5,
             flights_climbed=30,
+            weight=71.0,
             recorded_at=datetime(2026, 1, 6, 14, 30, 0),
         )
         dump3 = HealthDump(
@@ -191,6 +198,7 @@ class TestGetHealthDataWithFilters:
             kcals=450.0,
             km=7.0,
             flights_climbed=40,
+            weight=70.5,
             recorded_at=datetime(2026, 1, 7, 14, 30, 0),
         )
 
@@ -213,6 +221,7 @@ class TestGetHealthDataWithFilters:
             kcals=500.5,
             km=8.2,
             flights_climbed=50,
+            weight=72.5,
             recorded_at=datetime(2026, 1, 5, 14, 30, 0),
         )
         dump2 = HealthDump(
@@ -221,6 +230,7 @@ class TestGetHealthDataWithFilters:
             kcals=400.0,
             km=6.5,
             flights_climbed=30,
+            weight=71.0,
             recorded_at=datetime(2026, 1, 6, 14, 30, 0),
         )
 

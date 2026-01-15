@@ -27,6 +27,10 @@ const CONFIG = {
             main: '#AF52DE',
             light: 'rgba(175, 82, 222, 0.2)',
         },
+        weight: {
+            main: '#FF6B9D',
+            light: 'rgba(255, 107, 157, 0.2)',
+        },
     },
     periods: {
         week: 7,
@@ -138,6 +142,7 @@ const groupDataByDay = (data) => {
         kcals: sorted.map(d => Number(d.kcals) || 0),
         km: sorted.map(d => Number(d.km) || 0),
         flights_climbed: sorted.map(d => Number(d.flights_climbed) || 0),
+        weight: sorted.map(d => d.weight ? Number(d.weight) : null),
     };
 };
 
@@ -153,6 +158,7 @@ const groupDataByMonth = (data) => {
                 kcals: { total: 0, count: 0 },
                 km: { total: 0, count: 0 },
                 flights_climbed: { total: 0, count: 0 },
+                weight: null, // Store latest weight value, not average
             };
         }
         
@@ -160,6 +166,7 @@ const groupDataByMonth = (data) => {
         const kcalsVal = Number(item.kcals) || 0;
         const kmVal = Number(item.km) || 0;
         const stairsVal = Number(item.flights_climbed) || 0;
+        const weightVal = item.weight ? Number(item.weight) : null;
         
         if (stepsVal > 0) {
             monthMap[monthKey].steps.total += stepsVal;
@@ -177,6 +184,10 @@ const groupDataByMonth = (data) => {
             monthMap[monthKey].flights_climbed.total += stairsVal;
             monthMap[monthKey].flights_climbed.count += 1;
         }
+        // For weight, use the latest value in the period (most recent)
+        if (weightVal !== null && weightVal > 0) {
+            monthMap[monthKey].weight = weightVal;
+        }
     });
     
     const sortedMonths = Object.keys(monthMap).sort();
@@ -189,6 +200,7 @@ const groupDataByMonth = (data) => {
         kcals: sortedMonths.map(m => monthMap[m].kcals.count > 0 ? monthMap[m].kcals.total / monthMap[m].kcals.count : 0),
         km: sortedMonths.map(m => monthMap[m].km.count > 0 ? monthMap[m].km.total / monthMap[m].km.count : 0),
         flights_climbed: sortedMonths.map(m => monthMap[m].flights_climbed.count > 0 ? monthMap[m].flights_climbed.total / monthMap[m].flights_climbed.count : 0),
+        weight: sortedMonths.map(m => monthMap[m].weight), // Use latest weight value, not average
     };
 };
 
@@ -221,6 +233,7 @@ const groupDataByWeek = (data) => {
                 kcals: { total: 0, count: 0 },
                 km: { total: 0, count: 0 },
                 flights_climbed: { total: 0, count: 0 },
+                weight: null, // Store latest weight value, not average
             };
         }
         
@@ -228,6 +241,7 @@ const groupDataByWeek = (data) => {
         const kcalsVal = Number(item.kcals) || 0;
         const kmVal = Number(item.km) || 0;
         const stairsVal = Number(item.flights_climbed) || 0;
+        const weightVal = item.weight ? Number(item.weight) : null;
         
         if (stepsVal > 0) {
             weekMap[weekKey].steps.total += stepsVal;
@@ -245,6 +259,10 @@ const groupDataByWeek = (data) => {
             weekMap[weekKey].flights_climbed.total += stairsVal;
             weekMap[weekKey].flights_climbed.count += 1;
         }
+        // For weight, use the latest value in the period (most recent)
+        if (weightVal !== null && weightVal > 0) {
+            weekMap[weekKey].weight = weightVal;
+        }
     });
     
     const sortedWeeks = Object.keys(weekMap).sort();
@@ -256,6 +274,7 @@ const groupDataByWeek = (data) => {
         kcals: sortedWeeks.map(w => weekMap[w].kcals.count > 0 ? weekMap[w].kcals.total / weekMap[w].kcals.count : 0),
         km: sortedWeeks.map(w => weekMap[w].km.count > 0 ? weekMap[w].km.total / weekMap[w].km.count : 0),
         flights_climbed: sortedWeeks.map(w => weekMap[w].flights_climbed.count > 0 ? weekMap[w].flights_climbed.total / weekMap[w].flights_climbed.count : 0),
+        weight: sortedWeeks.map(w => weekMap[w].weight), // Use latest weight value, not average
     };
 };
 
@@ -386,11 +405,12 @@ const updateStatistics = (data, period, selectedRange = null) => {
     const kcalsStats = calcStats(filteredData, 'kcals');
     const kmStats = calcStats(filteredData, 'km');
     const stairsStats = calcStats(filteredData, 'flights_climbed');
+    const weightStats = calcStats(filteredData, 'weight');
     
     // Update Days Tracked badge in header
     updateText('daysTrackedBadge', `${filteredData.length} days`);
     
-    // Update grouped stats cards (will be restructured in HTML)
+    // Update grouped stats cards
     // Steps card
     updateText('stepsMin', formatNumber(Math.round(stepsStats.min)));
     updateText('stepsMax', formatNumber(Math.round(stepsStats.max)));
@@ -414,6 +434,14 @@ const updateStatistics = (data, period, selectedRange = null) => {
     updateText('caloriesMax', formatNumber(Math.round(kcalsStats.max)));
     updateText('caloriesAvg', formatNumber(Math.round(kcalsStats.avg)));
     updateText('caloriesTotal', formatNumber(Math.round(kcalsStats.total)));
+    
+    // Weight card - Latest should come from all data, not filtered
+    // Find the most recent weight from all data (data is sorted by date DESC)
+    const latestWeight = data.find(item => item.weight !== null && item.weight !== undefined)?.weight || null;
+    updateText('weightMin', weightStats.min > 0 ? `${formatNumber(weightStats.min, 1)} kg` : '--');
+    updateText('weightMax', weightStats.max > 0 ? `${formatNumber(weightStats.max, 1)} kg` : '--');
+    updateText('weightAvg', weightStats.avg > 0 ? `${formatNumber(weightStats.avg, 1)} kg` : '--');
+    updateText('weightLatest', latestWeight ? `${formatNumber(latestWeight, 1)} kg` : '--');
 };
 
 const escapeHtml = (str) => {
@@ -450,6 +478,10 @@ const sortActivityData = (data, column, direction) => {
                 aVal = Number(a.flights_climbed) || 0;
                 bVal = Number(b.flights_climbed) || 0;
                 break;
+            case 'weight':
+                aVal = Number(a.weight) || 0;
+                bVal = Number(b.weight) || 0;
+                break;
             default:
                 return 0;
         }
@@ -481,9 +513,11 @@ const renderActivityList = (data) => {
     updateSortIndicators();
     
     if (!data.length) {
+        const table = document.getElementById('activityTable');
+        const columnCount = table ? table.querySelectorAll('thead th').length : 1;
         container.innerHTML = `
             <tr class="activity-empty-row">
-                <td colspan="5">
+                <td colspan="${columnCount}">
                     <div class="empty-state">
                         <div class="empty-state-icon">📊</div>
                         <p class="empty-state-text">No activity data yet</p>
@@ -502,6 +536,7 @@ const renderActivityList = (data) => {
         const kcalsStr = formatNumber(Math.round(item.kcals ?? 0));
         const kmStr = formatNumber(item.km, 1);
         const stairsStr = formatNumber(item.flights_climbed ?? 0);
+        const weightStr = item.weight ? formatNumber(item.weight, 1) : '--';
         
         return `
             <tr class="activity-tr" data-date="${dateIso}">
@@ -510,6 +545,7 @@ const renderActivityList = (data) => {
                 <td class="activity-td activity-td--calories">${escapeHtml(kcalsStr)}</td>
                 <td class="activity-td activity-td--distance">${escapeHtml(kmStr)} km</td>
                 <td class="activity-td activity-td--flights-climbed">${escapeHtml(stairsStr)}</td>
+                <td class="activity-td activity-td--weight">${escapeHtml(weightStr)}${item.weight ? ' kg' : ''}</td>
             </tr>
         `;
     }).join('');
@@ -646,6 +682,7 @@ const getCombinedChartOptions = () => ({
                     if (label.includes('Calories')) return `Calories: ${formatNumber(Math.round(value))} kcal`;
                     if (label.includes('Distance')) return `Distance: ${formatNumber(value, 1)} km`;
                     if (label.includes('Flights Climbed')) return `Flights Climbed: ${formatNumber(value)}`;
+                    if (label.includes('Weight')) return `Weight: ${formatNumber(value, 1)} kg`;
                     return `${label}: ${formatNumber(value)}`;
                 },
             },
@@ -733,6 +770,23 @@ const getCombinedChartOptions = () => ({
                 font: { size: 11 },
             },
         },
+        yWeight: {
+            type: 'linear',
+            position: 'right',
+            beginAtZero: false,
+            grid: { display: false },
+            ticks: {
+                color: CONFIG.chartColors.weight.main,
+                font: { family: '-apple-system, BlinkMacSystemFont, sans-serif', size: 10 },
+            },
+            border: { display: false },
+            title: {
+                display: true,
+                text: 'Weight (kg)',
+                color: CONFIG.chartColors.weight.main,
+                font: { size: 11 },
+            },
+        },
     },
     elements: {
         point: {
@@ -744,6 +798,7 @@ const getCombinedChartOptions = () => ({
         line: {
             tension: 0.2,
             borderWidth: 2,
+            spanGaps: true, // Connect lines across missing data points
         },
     },
 });
@@ -850,6 +905,15 @@ const updateCombinedChart = (data) => {
                 pointRadius: 0,
                 yAxisID: 'yFlightsClimbed',
                 fill: false,
+            },
+            {
+                label: 'Weight',
+                data: grouped.weight,
+                borderColor: CONFIG.chartColors.weight.main,
+                backgroundColor: CONFIG.chartColors.weight.light,
+                yAxisID: 'yWeight',
+                fill: false,
+                spanGaps: true, // Connect across null/missing values
             },
         ],
     };

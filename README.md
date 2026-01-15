@@ -3,7 +3,7 @@
 [![CI](https://github.com/momonala/ios-health/actions/workflows/ci.yml/badge.svg)](https://github.com/momonala/ios-health/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/momonala/ios-health/branch/main/graph/badge.svg)](https://codecov.io/gh/momonala/ios-health)
 
-Backend service and web dashboard for receiving, storing, and visualizing daily health metrics (steps, calories, distance, flights climbed) from iOS via Shortcuts.
+Backend service and web dashboard for receiving, storing, and visualizing daily health metrics (steps, calories, distance, flights climbed, weight) from iOS via Shortcuts.
 
 ## Tech Stack
 
@@ -24,7 +24,7 @@ flowchart LR
         Dashboard[Web Dashboard]
     end
     subgraph Storage
-        DB[(health_dumps.db)]
+        DB[(data/health_dumps.db)]
     end
     subgraph App
         Flask[Flask Server :5009]
@@ -136,16 +136,23 @@ ios-health/
 │
 ├── static/
 │   ├── css/
-│   │   └── styles.css        # Dashboard styles (iOS Health inspired)
+│   │   └── styles.css        # Dashboard styles
 │   └── js/
 │       └── dashboard.js      # Dashboard logic & Chart.js integration
+│
+├── tmp/
+│   └── import_csv.py         # CSV import script for HealthAutoExport files
+│
+├── data/
+│   └── health_dumps.db       # SQLite database (generated)
 │
 ├── install/
 │   ├── install.sh                                      # Setup script for Raspberry Pi
 │   ├── projects_ios-health.service                # Systemd service for Flask
 │   └── projects_ios-health-data-backup-scheduler.service  # Systemd service for scheduler
 │
-├── health_dumps.db           # SQLite database (generated)
+├── data/
+│   └── health_dumps.db       # SQLite database (generated)
 └── pyproject.toml            # Dependencies & tool config
 ```
 
@@ -195,6 +202,7 @@ GET /api/health-data?date_start=2026-01-01&date_end=2026-01-31
       "kcals": 500.5,
       "km": 8.2,
       "flights_climbed": 50,
+      "weight": 72.5,
       "recorded_at": "2026-01-03T14:30:00+01:00"
     }
   ]
@@ -208,7 +216,7 @@ GET /api/health-data?date_start=2026-01-01&date_end=2026-01-31
 ```bash
 curl -X POST http://localhost:5009/dump \
   -H "Content-Type: application/json" \
-  -d '{"steps": 10000, "kcals": 500.5, "km": 8.2, "flights_climbed": 50}'
+  -d '{"steps": 10000, "kcals": 500.5, "km": 8.2, "flights_climbed": 50, "weight": 72.5}'
 ```
 
 Request body:
@@ -217,7 +225,8 @@ Request body:
   "steps": "integer (required)",
   "kcals": "float (required)",
   "km": "float (required)",
-  "flights_climbed": "integer (optional)"
+  "flights_climbed": "integer (optional)",
+  "weight": "float (optional)"
 }
 ```
 
@@ -231,6 +240,7 @@ Response:
     "kcals": 500.5,
     "km": 8.2,
     "flights_climbed": 50,
+    "weight": 72.5,
     "recorded_at": "2026-01-03T14:30:00+01:00"
   },
   "row_count": 42
@@ -244,20 +254,22 @@ The web dashboard provides an iOS Health App-inspired interface with:
 - **Today's Summary**: Large metric cards showing steps, calories, distance, and flights climbed with animated progress rings
 - **Optimized Loading**: Parallel API calls with SQL-level date filtering - today's data loads instantly (single row query) while historical data loads separately
 - **Animated Rings**: Progress rings animate smoothly from 0% to target percentage on page load using requestAnimationFrame
-- **Statistics**: Average values and totals for week/month/year periods
-- **Time Series Charts**: Interactive line charts for all metrics using Chart.js
-- **Recent Activity**: Sortable table with all activity data
-- **Responsive Design**: Works on mobile and desktop
+- **Statistics**: Grouped stats cards showing min, max, avg, and total for each metric (steps, calories, distance, flights, weight) with period filtering
+- **Time Series Charts**: Interactive line charts for all metrics using Chart.js with weight showing absolute values connected across gaps
+- **Recent Activity**: Sortable table with compact date formatting and all activity data
+- **Weight Tracking**: Weight measurements displayed in stats and charts, with smart merging from CSV imports
+- **Responsive Design**: Works on mobile and desktop with mobile-optimized layouts
 - **Dark Theme**: iOS-inspired dark color scheme
 
 ## Key Concepts
 
 | Concept | Description |
 |---------|-------------|
-| **Upsert logic** | Only keeps the latest entry per day; older duplicates are skipped |
+| **Upsert logic** | Only keeps the latest entry per day; older duplicates are skipped. Weight from older CSV data is merged into newer records if missing |
 | **Timezone** | All times normalized to Europe/Berlin |
 | **Auto-commit** | Scheduler commits DB changes to git hourly; amends same-day commits |
 | **Goals** | Default goals: 10,000 steps, 500 kcal, 8 km, 50 flights climbed (configurable in frontend) |
+| **Weight tracking** | Weight is optional and may be sparse (measured infrequently). Chart connects all available weight points across gaps |
 
 ## Data Models
 
@@ -268,6 +280,7 @@ HealthDump
 ├── kcals: float
 ├── km: float
 ├── flights_climbed: int
+├── weight: float | None
 └── recorded_at: datetime (ISO timestamp)
 ```
 
@@ -275,8 +288,8 @@ HealthDump
 
 | File | Purpose |
 |------|---------|
-| `health_dumps.db` | SQLite DB for daily health metrics |
-| `health_dumps.db.bk` | Backup created on each commit |
+| `data/health_dumps.db` | SQLite DB for daily health metrics |
+| `data/health_dumps.db.bk` | Backup created on each commit |
 
 ## Deployment
 
