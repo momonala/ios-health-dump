@@ -97,7 +97,20 @@ const formatDate = (dateStr) => {
 
 const getTodayISO = () => new Date().toISOString().split('T')[0];
 
-const calcPercentage = (value, goal) => Math.min(100, Math.round((value / goal) * 100));
+const calcPercentage = (value, goal) => (goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 0);
+
+const getGoalsFromData = (data) => {
+    const stepsStats = calcStats(data, 'steps');
+    const kcalsStats = calcStats(data, 'kcals');
+    const kmStats = calcStats(data, 'km');
+    const flightsStats = calcStats(data, 'flights_climbed');
+    return {
+        steps: stepsStats.avg > 0 ? Math.round(stepsStats.avg) : CONFIG.goals.steps,
+        kcals: kcalsStats.avg > 0 ? Math.round(kcalsStats.avg) : CONFIG.goals.kcals,
+        km: kmStats.avg > 0 ? kmStats.avg : CONFIG.goals.km,
+        flights_climbed: flightsStats.avg > 0 ? Math.round(flightsStats.avg) : CONFIG.goals.flights_climbed,
+    };
+};
 
 const filterByPeriod = (data, period) => {
     if (period === 'all') return data;
@@ -367,25 +380,26 @@ const updateHeaderDate = (data) => {
     }
 };
 
-const updateTodayMetrics = (todayData, animated = false) => {
+const updateTodayMetrics = (todayData, animated = false, goals = null) => {
     if (!todayData) {
         todayData = { steps: 0, kcals: 0, km: 0, flights_climbed: 0 };
     }
-    
+    const g = goals ?? CONFIG.goals;
+
     updateText('todaySteps', formatNumber(todayData.steps));
     updateText('todayKcals', formatNumber(Math.round(todayData.kcals ?? 0)));
     updateText('todayKm', formatNumber(todayData.km, 1));
     updateText('todayFlightsClimbed', formatNumber(todayData.flights_climbed ?? 0));
-    
-    updateProgressRing('stepsProgress', calcPercentage(todayData.steps ?? 0, CONFIG.goals.steps), animated);
-    updateProgressRing('kcalsProgress', calcPercentage(todayData.kcals ?? 0, CONFIG.goals.kcals), animated);
-    updateProgressRing('kmProgress', calcPercentage(todayData.km ?? 0, CONFIG.goals.km), animated);
-    updateProgressRing('flightsClimbedProgress', calcPercentage(todayData.flights_climbed ?? 0, CONFIG.goals.flights_climbed), animated);
-    
-    updateText('stepsGoalLabel', `of ${formatNumber(CONFIG.goals.steps)} goal`);
-    updateText('kcalsGoalLabel', `of ${formatNumber(CONFIG.goals.kcals)} goal`);
-    updateText('kmGoalLabel', `of ${CONFIG.goals.km} km goal`);
-    updateText('flightsClimbedGoalLabel', `of ${formatNumber(CONFIG.goals.flights_climbed)} goal`);
+
+    updateProgressRing('stepsProgress', calcPercentage(todayData.steps ?? 0, g.steps), animated);
+    updateProgressRing('kcalsProgress', calcPercentage(todayData.kcals ?? 0, g.kcals), animated);
+    updateProgressRing('kmProgress', calcPercentage(todayData.km ?? 0, g.km), animated);
+    updateProgressRing('flightsClimbedProgress', calcPercentage(todayData.flights_climbed ?? 0, g.flights_climbed), animated);
+
+    updateText('stepsGoalLabel', `of ${formatNumber(g.steps)} goal`);
+    updateText('kcalsGoalLabel', `of ${formatNumber(g.kcals)} goal`);
+    updateText('kmGoalLabel', `of ${g.km} km goal`);
+    updateText('flightsClimbedGoalLabel', `of ${formatNumber(g.flights_climbed)} goal`);
 };
 
 const updateStatistics = (data, period, selectedRange = null) => {
@@ -1304,9 +1318,10 @@ const initDashboard = async () => {
     
     // Update header with last updated timestamp (data is sorted by date desc, so first item is most recent)
     updateHeaderDate(allHealthData);
-    
-    // Update today metrics immediately with animation
-    updateTodayMetrics(todayData, true);
+
+    // Goals = all-time average of each metric (fallback to CONFIG.goals when no data)
+    const goals = getGoalsFromData(allHealthData);
+    updateTodayMetrics(todayData, true, goals);
     
     // Update other sections with historical data
     updateStatistics(state.healthData, state.currentPeriod, state.selection);
